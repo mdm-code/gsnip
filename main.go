@@ -1,13 +1,18 @@
 package main
 
-import (
-	"flag"
-	"fmt"
-)
+import "os"
 
 func main() {
-	var clsName string
-	flag.StringVar(&clsName, "name", "A", "name the class")
-	flag.Parse()
-	fmt.Printf("class %s:\n    def __init__(self) -> None:\n        pass\n", clsName)
+}
+
+type snippet struct {
+	name, desc, body string
+}
+
+func parse(f *os.File) (snippet, error) {
+	return snippet{
+		name: "func",
+		desc: "Go function with no attributes and returns",
+		body: "func namedFunction() {\n\treturn\n}",
+	}, nil
 }

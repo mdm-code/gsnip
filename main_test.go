@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -22,15 +23,28 @@ var structSnip = Snip{
 }`,
 }
 
+func mockReader() io.Reader {
+	reader := strings.NewReader(`
+startsnip func "Go function with no attributes and returns"
+func namedFunction() {
+	return
+}
+endsnip
+
+startsnip struct "Go struct template"
+type namedStruct struct {
+	name string
+	id int
+}
+endsnip`)
+	return reader
+}
+
 var snips = map[string]Snip{"func": funcSnip, "struct": structSnip}
 
 func TestParsing(t *testing.T) {
-	f, err := os.Open("assets/sample.snip")
-	if err != nil {
-		t.Error("test failed when opening file with snippets")
-	}
-	defer f.Close()
-	has, err := parse(f)
+	reader := mockReader()
+	has, _ := parse(reader)
 	if ok := reflect.DeepEqual(has, snips); !ok {
 		t.Errorf("want: %s; has %s", snips, has)
 	}
@@ -48,3 +62,5 @@ func namedFunction() {
 		t.Errorf("has: %s; want: %s", has, want)
 	}
 }
+
+// TODO: Make errors assertions -- replace FILE with fake buffer

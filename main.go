@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -32,7 +33,8 @@ const (
 	SCANBODY
 )
 
-func parse(f *os.File) (map[string]Snip, error) {
+// TODO: Handle parsing ERRORS
+func parse(f io.Reader) (map[string]Snip, error) {
 	// Finite state automaton for reading file contents.
 	in := bufio.NewScanner(f)
 	snips := make(map[string]Snip)

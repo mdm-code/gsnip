@@ -1,4 +1,4 @@
-build: test
+build:
 	go build -o bin/gsnip main.go
 
 run: build
@@ -7,6 +7,6 @@ run: build
 test:
 	go test ./... -v
 
-all: run
+all: test build
 
 PHONY: build run test

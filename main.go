@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -9,69 +10,152 @@ import (
 )
 
 func main() {
-	f, err := os.Open("assets/sample.snip")
-	defer f.Close()
+	var file string
+	flag.StringVar(&file, "file", "snips", "File with snippets")
+	flag.Parse()
+	f, err := os.Open(file)
 	if err != nil {
-		os.Exit(1)
+		fmt.Println(err)
 	}
-	fmt.Println(parse(f))
+	parser := NewParser()
+	result, err := parser.Parse(f)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result)
 }
 
-type Snip struct {
-	name, desc, body string
-}
-
-func (s Snip) String() string {
-	return fmt.Sprintf("%s\n%s\n\n%s", s.name, s.desc, s.body)
-}
+const (
+	SCANNING State = iota
+	SIGNATURE
+	SCANBODY
+	ERROR
+)
 
 type State uint8
 
-const (
-	SCANLINE State = iota
-	SIGNATURE
-	SCANBODY
-)
+type Snippet struct {
+	name string
+	desc string
+	body string
+}
 
-// TODO: Handle parsing ERRORS
-func parse(f io.Reader) (map[string]Snip, error) {
-	// Finite state automaton for reading file contents.
-	in := bufio.NewScanner(f)
-	snips := make(map[string]Snip)
-	state := SCANLINE
+type StateMachine struct {
+	transitions map[State]func(*StateMachine, string) (State, string)
+	parsed      []Snippet
+	body        []string
+	state       State
+}
 
-	var line string
-	var name, desc string
-	var body []string
+// Parses input files with snippets.
+type Parser struct {
+	sm *StateMachine
+}
 
-	for in.Scan() {
-		if state == SCANLINE {
-			line = in.Text()
-			if strings.HasPrefix(line, "startsnip") {
-				state = SIGNATURE
+func newStateMachine() *StateMachine {
+	return &StateMachine{
+		transitions: map[State]func(*StateMachine, string) (State, string){
+			SCANNING:  (*StateMachine).scanLine,
+			SIGNATURE: (*StateMachine).readSignature,
+			SCANBODY:  (*StateMachine).scanBody,
+		},
+		state: SCANNING,
+	}
+}
+
+// Create new parser.
+func NewParser() Parser {
+	return Parser{
+		sm: newStateMachine(),
+	}
+}
+
+func (s Snippet) String() string {
+	return fmt.Sprintf("%s\n%s\n\n%s", s.name, s.desc, s.body)
+}
+
+// Parse file with snippets.
+func (p *Parser) Parse(i io.Reader) (map[string]Snippet, error) {
+	result := make(map[string]Snippet)
+	parsed, err := p.sm.run(i)
+	if err != nil {
+		return result, err
+	}
+	for _, s := range parsed {
+		result[s.name] = s
+	}
+	return result, nil
+}
+
+func (sm *StateMachine) scanLine(line string) (State, string) {
+	if strings.HasPrefix(line, "startsnip") {
+		return SIGNATURE, line
+	}
+	return SCANNING, ""
+}
+
+func (sm *StateMachine) readSignature(line string) (State, string) {
+	elems, ok := splitSignature(line)
+	if !ok {
+		return ERROR, line
+	}
+	snip := Snippet{name: elems[0], desc: elems[1]}
+	sm.parsed = append(sm.parsed, snip)
+	return SCANBODY, ""
+}
+
+func splitSignature(sig string) ([]string, bool) {
+	tokens := strings.Split(sig, " ")
+	var result []string
+	var comment []string
+out:
+	for i, tkn := range tokens {
+		if strings.HasPrefix(tkn, "\"") {
+			for _, ctkn := range tokens[i:] {
+				comment = append(comment, ctkn)
 			}
+			break out
 		}
-		if state == SCANBODY {
-			line = in.Text()
-			if strings.HasPrefix(line, "endsnip") {
-				snips[name] = Snip{
-					name: name,
-					desc: desc,
-					body: strings.Join(body, "\n"),
-				}
-				state = SCANLINE
-				body = body[:0]
-				continue
-			}
-			body = append(body, line)
-		}
-		if state == SIGNATURE {
-			elems := strings.SplitN(line, " ", 3)
-			name = elems[1]
-			desc = strings.Trim(elems[2], "\"")
-			state = SCANBODY
+		if tkn == "startsnip" {
 			continue
 		}
+		result = append(result, tkn)
 	}
-	return snips, nil
+	stripped := strings.Trim(strings.Join(comment, " "), `"`)
+	if len(comment) != 0 { // Append even if it's an empty double quote
+		result = append(result, stripped)
+	}
+	if len(result) != 2 {
+		return []string{}, false
+	}
+	return result, true
+}
+
+func (sm *StateMachine) scanBody(line string) (State, string) {
+	if strings.HasPrefix(line, "endsnip") {
+		sm.parsed[len(sm.parsed)-1].body = strings.Join(sm.body, "\n")
+		sm.body = sm.body[:0]
+		return SCANNING, ""
+	}
+	sm.body = append(sm.body, line)
+	return SCANBODY, ""
+}
+
+func (sm *StateMachine) run(f io.Reader) ([]Snippet, error) {
+	s := bufio.NewScanner(f)
+	var line string
+	for {
+		if sm.state == ERROR {
+			return []Snippet{}, fmt.Errorf("Error on line: %s", line)
+		}
+		if line == "" {
+			if ok := s.Scan(); !ok {
+				break
+			}
+			line = s.Text()
+		}
+		callable := sm.transitions[sm.state]
+		sm.state, line = callable(sm, line)
+	}
+	return sm.parsed, nil
 }

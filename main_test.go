@@ -8,13 +8,13 @@ import (
 	"testing"
 )
 
-var funcSnip = Snip{
+var funcSnip = Snippet{
 	name: "func",
 	desc: "Go function with no attributes and returns",
 	body: "func namedFunction() {\n\treturn\n}",
 }
 
-var structSnip = Snip{
+var structSnip = Snippet{
 	name: "struct",
 	desc: "Go struct template",
 	body: `type namedStruct struct {
@@ -23,8 +23,8 @@ var structSnip = Snip{
 }`,
 }
 
-func mockReader() io.Reader {
-	reader := strings.NewReader(`
+var properReaders = []io.Reader{
+	strings.NewReader(`
 startsnip func "Go function with no attributes and returns"
 func namedFunction() {
 	return
@@ -36,17 +36,47 @@ type namedStruct struct {
 	name string
 	id int
 }
-endsnip`)
-	return reader
+endsnip`),
 }
 
-var snips = map[string]Snip{"func": funcSnip, "struct": structSnip}
+var failingReaders = []io.Reader{
+	strings.NewReader(`
+startsnip funcr
+func (r *receiver) func({$1:params}) ({$2:returns}) (
+	{$3:body}
+)
+endsnip`), // missing comment
+	strings.NewReader(`
+startsnip "Where's the name?"
+func someVeryImportantFunction () {
+	return "This is very important"
+}
+endsnip`),
+	strings.NewReader(`
+startsnip
+God knows what this is.
+endsnip`),
+}
+
+var snips = map[string]Snippet{"func": funcSnip, "struct": structSnip}
 
 func TestParsing(t *testing.T) {
-	reader := mockReader()
-	has, _ := parse(reader)
-	if ok := reflect.DeepEqual(has, snips); !ok {
-		t.Errorf("want: %s; has %s", snips, has)
+	for _, r := range properReaders {
+		parser := NewParser()
+		has, _ := parser.Parse(r)
+		if ok := reflect.DeepEqual(has, snips); !ok {
+			t.Errorf("want: %s; has %s", snips, has)
+		}
+	}
+}
+
+func TestAssertReadersFail(t *testing.T) {
+	parser := NewParser()
+	for _, r := range failingReaders {
+		_, err := parser.Parse(r)
+		if err == nil {
+			t.Errorf("Reader %v should fail", r)
+		}
 	}
 }
 
@@ -63,4 +93,29 @@ func namedFunction() {
 	}
 }
 
-// TODO: Make errors assertions -- replace FILE with fake buffer
+func TestSignatureSplitFails(t *testing.T) {
+	inputs := []string{
+		"startsnip struct",                // Missing comment
+		"startsnip printf 'some comment'", // comment not in double quotes
+		"",
+	}
+	for _, i := range inputs {
+		_, ok := splitSignature(i)
+		if ok {
+			t.Errorf("Signature line : %s : should fail", i)
+		}
+	}
+}
+
+func TestSignatureSplitPasses(t *testing.T) {
+	inputs := []string{
+		"startsnip struct \"Go struct snippet\"",
+		"startsnip func() \"\"", // Empty comment
+	}
+	for _, i := range inputs {
+		_, ok := splitSignature(i)
+		if !ok {
+			t.Errorf("Signature line : %s : should not error out", i)
+		}
+	}
+}

@@ -1,12 +1,22 @@
+GO=go
+GOFLAGS=-race
+DEV_BIN=bin
+
+mkbin:
+	mkdir -p bin
+
 build:
-	go build -o bin/gsnip main.go
+	go build $(GOFLAGS) -o $(DEV_BIN)/gsnip cmd/gsnip/main.go
 
 run: build
-	./bin/gsnip
+	./$(DEV_BIN)/gsnip -snippets snips
 
 test:
-	go test ./... -v
+	$(GO) test ./... -v
+
+install: test
+	go install ./...
 
 all: test build
 
-PHONY: build run test
+PHONY: build run test install

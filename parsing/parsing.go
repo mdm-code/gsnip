@@ -1,29 +1,11 @@
-package main
+package parsing
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
-
-func main() {
-	var file string
-	flag.StringVar(&file, "file", "snips", "File with snippets")
-	flag.Parse()
-	f, err := os.Open(file)
-	if err != nil {
-		fmt.Println(err)
-	}
-	parser := NewParser()
-	result, err := parser.Parse(f)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result)
-}
 
 const (
 	SCANNING State = iota
@@ -35,9 +17,9 @@ const (
 type State uint8
 
 type Snippet struct {
-	name string
-	desc string
-	body string
+	Name string
+	Desc string
+	Body string
 }
 
 type StateMachine struct {
@@ -71,7 +53,7 @@ func NewParser() Parser {
 }
 
 func (s Snippet) String() string {
-	return fmt.Sprintf("%s\n%s\n\n%s", s.name, s.desc, s.body)
+	return fmt.Sprintf("%s\n%s\n\n%s", s.Name, s.Desc, s.Body)
 }
 
 // Parse file with snippets.
@@ -82,7 +64,7 @@ func (p *Parser) Parse(i io.Reader) (map[string]Snippet, error) {
 		return result, err
 	}
 	for _, s := range parsed {
-		result[s.name] = s
+		result[s.Name] = s
 	}
 	return result, nil
 }
@@ -99,7 +81,7 @@ func (sm *StateMachine) readSignature(line string) (State, string) {
 	if !ok {
 		return ERROR, line
 	}
-	snip := Snippet{name: elems[0], desc: elems[1]}
+	snip := Snippet{Name: elems[0], Desc: elems[1]}
 	sm.parsed = append(sm.parsed, snip)
 	return SCANBODY, ""
 }
@@ -133,7 +115,7 @@ out:
 
 func (sm *StateMachine) scanBody(line string) (State, string) {
 	if strings.HasPrefix(line, "endsnip") {
-		sm.parsed[len(sm.parsed)-1].body = strings.Join(sm.body, "\n")
+		sm.parsed[len(sm.parsed)-1].Body = strings.Join(sm.body, "\n")
 		sm.body = sm.body[:0]
 		return SCANNING, ""
 	}

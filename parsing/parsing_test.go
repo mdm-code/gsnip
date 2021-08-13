@@ -1,4 +1,4 @@
-package main
+package parsing
 
 import (
 	"fmt"
@@ -9,15 +9,15 @@ import (
 )
 
 var funcSnip = Snippet{
-	name: "func",
-	desc: "Go function with no attributes and returns",
-	body: "func namedFunction() {\n\treturn\n}",
+	Name: "func",
+	Desc: "Go function with no attributes and returns",
+	Body: "func namedFunction() {\n\treturn\n}",
 }
 
 var structSnip = Snippet{
-	name: "struct",
-	desc: "Go struct template",
-	body: `type namedStruct struct {
+	Name: "struct",
+	Desc: "Go struct template",
+	Body: `type namedStruct struct {
 	name string
 	id int
 }`,

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 )
 
@@ -29,7 +30,7 @@ type StateMachine struct {
 	state       State
 }
 
-// Parses input files with snippets.
+// Parser parses input files with snippets.
 type Parser struct {
 	sm *StateMachine
 }
@@ -45,18 +46,15 @@ func newStateMachine() *StateMachine {
 	}
 }
 
-// Create new parser.
+// NewParser creates a fresh new parser.
 func NewParser() Parser {
 	return Parser{
 		sm: newStateMachine(),
 	}
 }
 
-func (s Snippet) String() string {
-	return fmt.Sprintf("%s\n%s\n\n%s", s.Name, s.Desc, s.Body)
-}
-
-// Parse file with snippets.
+// Parse file with snippets. The result is a map
+// of of snippets with name as key and body as value.
 func (p *Parser) Parse(i io.Reader) (map[string]Snippet, error) {
 	result := make(map[string]Snippet)
 	parsed, err := p.sm.run(i)
@@ -86,30 +84,36 @@ func (sm *StateMachine) readSignature(line string) (State, string) {
 	return SCANBODY, ""
 }
 
-func splitSignature(sig string) ([]string, bool) {
-	tokens := strings.Split(sig, " ")
-	var result []string
-	var comment []string
-out:
-	for i, tkn := range tokens {
-		if strings.HasPrefix(tkn, "\"") {
-			for _, ctkn := range tokens[i:] {
-				comment = append(comment, ctkn)
-			}
-			break out
-		}
-		if tkn == "startsnip" {
-			continue
-		}
-		result = append(result, tkn)
-	}
-	stripped := strings.Trim(strings.Join(comment, " "), `"`)
-	if len(comment) != 0 { // Append even if it's an empty double quote
-		result = append(result, stripped)
-	}
-	if len(result) != 2 {
+func splitSignature(s string) ([]string, bool) {
+	var startToken, name, comment string
+	splits := strings.SplitN(s, " ", 3)
+	unpack(splits, &startToken, &name, &comment)
+	comment, ok := takeBetween(comment, '"')
+	if !ok {
 		return []string{}, false
 	}
+	return []string{name, comment}, true
+}
+
+func unpack(s []string, vars ...*string) {
+	for i, str := range s {
+		*vars[i] = str
+	}
+}
+
+// Grab text between two delimiters.
+func takeBetween(s string, delim rune) (string, bool) {
+	var idxs []int
+	var result string
+	for i, c := range s {
+		if c == delim {
+			idxs = append(idxs, i)
+		}
+	}
+	if len(idxs) < 2 {
+		return result, false
+	}
+	result = s[idxs[0]+1 : idxs[len(idxs)-1]]
 	return result, true
 }
 
@@ -140,4 +144,21 @@ func (sm *StateMachine) run(f io.Reader) ([]Snippet, error) {
 		sm.state, line = callable(sm, line)
 	}
 	return sm.parsed, nil
+}
+
+// Replace attempts to substitute placeholders with strings.
+func Replace(str string, pat string, repls ...string) (string, bool) {
+	re, err := regexp.Compile(pat)
+	if err != nil {
+		return str, false
+	}
+	for _, r := range repls {
+		sms := re.FindStringSubmatch(str)
+		if len(sms) == 0 {
+			break
+		}
+		sm := sms[0]
+		str = strings.Replace(str, sm, r, 1)
+	}
+	return str, true
 }

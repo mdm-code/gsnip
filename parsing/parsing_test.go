@@ -5,15 +5,17 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/mdm-code/gsnip/snippets"
 )
 
-var funcSnip = Snippet{
+var funcSnip = snippets.Snippet{
 	Name: "func",
 	Desc: "Go function with no attributes and returns",
 	Body: "func namedFunction() {\n\treturn\n}",
 }
 
-var structSnip = Snippet{
+var structSnip = snippets.Snippet{
 	Name: "struct",
 	Desc: "Go struct template",
 	Body: "type namedStruct struct {\n\tname string\n\tid int\n}",
@@ -54,7 +56,7 @@ God knows what this is.
 endsnip`),
 }
 
-var snips = map[string]Snippet{"func": funcSnip, "struct": structSnip}
+var snips = snippets.Snippets{"func": funcSnip, "struct": structSnip}
 
 func TestParsing(t *testing.T) {
 	for _, r := range properReaders {

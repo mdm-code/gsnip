@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/mdm-code/gsnip/parsing"
 )
@@ -61,15 +62,23 @@ func main() {
 			search, repls = attrs[0], attrs[1:]
 		}
 
-		snip, ok := snippets[search]
-		if !ok {
-			os.Stderr.WriteString(search + " was not found")
+		if cmd := strings.ToLower(search); cmd == "list" {
+			out := snippets.List()
+			for _, s := range out {
+				os.Stdout.WriteString(s + "\n")
+			}
+		} else {
+
+			snip, ok := snippets.Find(search)
+			if !ok {
+				os.Stderr.WriteString(search + " was not found")
+			}
+			pat := `\${[0-9]+:\w*}`
+			out, ok := parsing.Replace(snip.Body, pat, repls...)
+			if !ok {
+				os.Stderr.WriteString("Failed to compile regex pattern: " + pat)
+			}
+			os.Stdout.WriteString(out)
 		}
-		pat := `\${[0-9]+:\w*}`
-		out, ok := parsing.Replace(snip.Body, pat, repls...)
-		if !ok {
-			os.Stderr.WriteString("Failed to compile regex pattern: " + pat)
-		}
-		os.Stdout.WriteString(out)
 	}
 }

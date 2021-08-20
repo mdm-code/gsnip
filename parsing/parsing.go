@@ -6,6 +6,8 @@ import (
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/mdm-code/gsnip/snippets"
 )
 
 const (
@@ -17,15 +19,9 @@ const (
 
 type State uint8
 
-type Snippet struct {
-	Name string
-	Desc string
-	Body string
-}
-
 type StateMachine struct {
 	transitions map[State]func(*StateMachine, string) (State, string)
-	parsed      []Snippet
+	parsed      []snippets.Snippet
 	body        []string
 	state       State
 }
@@ -55,8 +51,8 @@ func NewParser() Parser {
 
 // Parse file with snippets. The result is a map
 // of of snippets with name as key and body as value.
-func (p *Parser) Parse(i io.Reader) (map[string]Snippet, error) {
-	result := make(map[string]Snippet)
+func (p *Parser) Parse(i io.Reader) (snippets.Snippets, error) {
+	result := make(snippets.Snippets)
 	parsed, err := p.sm.run(i)
 	if err != nil {
 		return result, err
@@ -79,7 +75,7 @@ func (sm *StateMachine) readSignature(line string) (State, string) {
 	if !ok {
 		return ERROR, line
 	}
-	snip := Snippet{Name: elems[0], Desc: elems[1]}
+	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}
 	sm.parsed = append(sm.parsed, snip)
 	return SCANBODY, ""
 }
@@ -127,12 +123,12 @@ func (sm *StateMachine) scanBody(line string) (State, string) {
 	return SCANBODY, ""
 }
 
-func (sm *StateMachine) run(f io.Reader) ([]Snippet, error) {
+func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 	s := bufio.NewScanner(f)
 	var line string
 	for {
 		if sm.state == ERROR {
-			return []Snippet{}, fmt.Errorf("Error on line: %s", line)
+			return []snippets.Snippet{}, fmt.Errorf("Error on line: %s", line)
 		}
 		if line == "" {
 			if ok := s.Scan(); !ok {

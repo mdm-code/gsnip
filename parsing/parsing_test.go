@@ -181,3 +181,12 @@ func TestCheckIfIsCommand(t *testing.T) {
 		}
 	}
 }
+
+func TestParsingFailsOnCmd(t *testing.T) {
+	line := "startsnip list \"Signature of a command to fail\""
+	sm := newStateMachine()
+	state, line := sm.readSignature(line)
+	if state != ERROR {
+		t.Errorf("error was not raised on line: %s", line)
+	}
+}

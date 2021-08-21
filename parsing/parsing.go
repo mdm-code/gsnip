@@ -79,6 +79,9 @@ func (sm *StateMachine) readSignature(line string) (State, string) {
 	if !ok {
 		return ERROR, line
 	}
+	if IsCommand(strings.ToLower(elems[0])) {
+		return ERROR, line
+	}
 	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}
 	sm.parsed = append(sm.parsed, snip)
 	return SCANBODY, ""

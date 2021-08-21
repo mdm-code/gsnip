@@ -17,6 +17,10 @@ const (
 	ERROR
 )
 
+var cmds = []string{
+	"list",
+}
+
 type State uint8
 
 type StateMachine struct {
@@ -157,4 +161,13 @@ func Replace(str string, pat string, repls ...string) (string, bool) {
 		str = strings.Replace(str, sm, r, 1)
 	}
 	return str, true
+}
+
+func IsCommand(s string) bool {
+	for _, cmd := range cmds {
+		if s == cmd {
+			return true
+		}
+	}
+	return false
 }

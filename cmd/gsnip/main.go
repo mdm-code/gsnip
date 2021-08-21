@@ -13,6 +13,10 @@ import (
 
 const Source = "/usr/local/share/gsnip/snippets"
 
+var cmds = []string{
+	"list",
+}
+
 func main() {
 	fn := flag.String("f", Source, "Snippets source file")
 	flag.Usage = func() {
@@ -62,13 +66,12 @@ func main() {
 			search, repls = attrs[0], attrs[1:]
 		}
 
-		if cmd := strings.ToLower(search); cmd == "list" {
+		if isCommand(strings.ToLower(search)) {
 			out := snippets.List()
 			for _, s := range out {
 				os.Stdout.WriteString(s + "\n")
 			}
 		} else {
-
 			snip, ok := snippets.Find(search)
 			if !ok {
 				os.Stderr.WriteString(search + " was not found")
@@ -81,4 +84,13 @@ func main() {
 			os.Stdout.WriteString(out)
 		}
 	}
+}
+
+func isCommand(s string) bool {
+	for _, cmd := range cmds {
+		if s == cmd {
+			return true
+		}
+	}
+	return false
 }

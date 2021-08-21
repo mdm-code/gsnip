@@ -38,12 +38,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Check if there's anything to read on STDIN
-	isPiped := func() bool {
-		fi, _ := os.Stdin.Stat()
-		return (fi.Mode() & os.ModeCharDevice) == 0
-	}
-
 	if isPiped() {
 		s := bufio.NewScanner(os.Stdin)
 		s.Split(bufio.ScanWords)
@@ -81,4 +75,10 @@ func main() {
 			os.Stdout.WriteString(out)
 		}
 	}
+}
+
+// Check if there's anything to read on STDIN
+func isPiped() bool {
+	fi, _ := os.Stdin.Stat()
+	return (fi.Mode() & os.ModeCharDevice) == 0
 }

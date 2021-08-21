@@ -38,12 +38,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Check if there's anything to read on STDIN
-	isPiped := func() bool {
-		fi, _ := os.Stdin.Stat()
-		return (fi.Mode() & os.ModeCharDevice) == 0
-	}
-
 	if isPiped() {
 		s := bufio.NewScanner(os.Stdin)
 		s.Split(bufio.ScanWords)
@@ -71,14 +65,20 @@ func main() {
 		} else {
 			snip, ok := snippets.Find(search)
 			if !ok {
-				os.Stderr.WriteString(search + " was not found")
+				log.Fatal(search + " was not found")
 			}
 			pat := `\${[0-9]+:\w*}`
 			out, ok := parsing.Replace(snip.Body, pat, repls...)
 			if !ok {
-				os.Stderr.WriteString("Failed to compile regex pattern: " + pat)
+				log.Fatal("Failed to compile regex pattern: " + pat)
 			}
 			os.Stdout.WriteString(out)
 		}
 	}
+}
+
+// Check if there's anything to read on STDIN
+func isPiped() bool {
+	fi, _ := os.Stdin.Stat()
+	return (fi.Mode() & os.ModeCharDevice) == 0
 }

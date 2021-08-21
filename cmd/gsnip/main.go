@@ -71,12 +71,12 @@ func main() {
 		} else {
 			snip, ok := snippets.Find(search)
 			if !ok {
-				os.Stderr.WriteString(search + " was not found")
+				log.Fatal(search + " was not found")
 			}
 			pat := `\${[0-9]+:\w*}`
 			out, ok := parsing.Replace(snip.Body, pat, repls...)
 			if !ok {
-				os.Stderr.WriteString("Failed to compile regex pattern: " + pat)
+				log.Fatal("Failed to compile regex pattern: " + pat)
 			}
 			os.Stdout.WriteString(out)
 		}

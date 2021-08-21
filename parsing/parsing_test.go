@@ -164,3 +164,29 @@ func TestTestReplaceOutput(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckIfIsCommand(t *testing.T) {
+	inputs := []struct {
+		cmd      string
+		expected bool
+	}{
+		{"list", true},
+		{"prune", false},
+		{"", false},
+	}
+	for _, i := range inputs {
+		ok := IsCommand(i.cmd)
+		if ok != i.expected {
+			t.Errorf("command string was misidentified: %s", i.cmd)
+		}
+	}
+}
+
+func TestParsingFailsOnCmd(t *testing.T) {
+	line := "startsnip list \"Signature of a command to fail\""
+	sm := newStateMachine()
+	state, line := sm.readSignature(line)
+	if state != ERROR {
+		t.Errorf("error was not raised on line: %s", line)
+	}
+}

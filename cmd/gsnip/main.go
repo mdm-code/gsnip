@@ -62,13 +62,13 @@ func main() {
 			search, repls = attrs[0], attrs[1:]
 		}
 
-		if cmd := strings.ToLower(search); cmd == "list" {
+		cmd := strings.ToLower(search)
+		if parsing.IsCommand(cmd) && cmd == "list" {
 			out := snippets.List()
 			for _, s := range out {
 				os.Stdout.WriteString(s + "\n")
 			}
 		} else {
-
 			snip, ok := snippets.Find(search)
 			if !ok {
 				os.Stderr.WriteString(search + " was not found")

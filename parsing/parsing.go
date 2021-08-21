@@ -17,6 +17,10 @@ const (
 	ERROR
 )
 
+var cmds = []string{
+	"list",
+}
+
 type State uint8
 
 type StateMachine struct {
@@ -73,6 +77,9 @@ func (sm *StateMachine) scanLine(line string) (State, string) {
 func (sm *StateMachine) readSignature(line string) (State, string) {
 	elems, ok := splitSignature(line)
 	if !ok {
+		return ERROR, line
+	}
+	if IsCommand(strings.ToLower(elems[0])) {
 		return ERROR, line
 	}
 	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}
@@ -157,4 +164,13 @@ func Replace(str string, pat string, repls ...string) (string, bool) {
 		str = strings.Replace(str, sm, r, 1)
 	}
 	return str, true
+}
+
+func IsCommand(s string) bool {
+	for _, cmd := range cmds {
+		if s == cmd {
+			return true
+		}
+	}
+	return false
 }

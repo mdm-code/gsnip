@@ -38,7 +38,7 @@ it at this point.
 
 ## Installation
 
-Consult `Makefile`: there is the `install` directive that you would call with
+Consult `Makefile`; there is the `install` directive that you would call with
 `make install`, and that's pretty much it when it comes to installation of a Go
 program.
 
@@ -46,10 +46,10 @@ program.
 ## Testing
 
 I am using the `testing` package from the Go standard library, so you can call
-`test ./... -v` or you can resort to the `Makefile` and use `make test`
-command. I am really not worried about the coverage at this stage; the program
-is way to simple and the test as they currenly are, they cover all of the
-functional bottlenecks of the program.
+`test ./... -v`, or you can resort to `Makefile` and use `make test` command. I
+am really not worried about the coverage at this stage; the program is way to
+simple and the test as they currently are, they cover all of the functional
+bottlenecks of the program.
 
 
 ## Future plans

@@ -5,6 +5,12 @@ import (
 	"sort"
 )
 
+type Container interface {
+	Insert(Snippet) bool
+	Find(string) (Snippet, bool)
+	List() []string
+}
+
 type Snippet struct {
 	Name string
 	Desc string

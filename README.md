@@ -54,11 +54,13 @@ bottlenecks of the program.
 
 ## Future plans
 
-1. Common interface for flat files and databases. Right now it just parses a
-   text file. Databases would require some more abstarction in the code.
-2. Make it a server plus a client where it spin up a server and the the client
-   and server talk to each other over a Unix Domain Socket. I'd like to keep
-   the commands as they are, therfore, I would rather refrain from TCP.
-3. I want the client to consequently rely on STDIN.
-4. I have to ponder over ADD and DELETE commands and how to implement them, if
-   at all.
+1. Common interface for flat files and databases. Right now the program parses
+   a text file. Databases would require some more abstraction introduced in the
+   code.
+2. Make it a server plus a client where it spin up a server, and the client and
+   server talk to each other over a Unix Domain Socket. I'd like to keep the
+   commands as they are, therefore, I would rather refrain from TCP.
+3. I want the client to consequently rely on standard input.
+4. I have to ponder over `ADD` and `DELETE` commands and how to implement them,
+   if at all. Wouldn't it be good to use just Vim and a snippet for `gsnip`
+   snippets?

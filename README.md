@@ -30,9 +30,10 @@ Here is a list of restricted names (`gsnip` commands):
 
 ## Usage
 
-Type in `gsnip -help` to get the help. You can type in `gsnip list` to get a
-list of all snippets. To get the body of your snippet, type in `gsnip NAME`
-where `NAME` is of course the name of the snippet. That's it at this point.
+Type in `gsnip -help` to show the help message. You can type in `gsnip list` to
+get a list of all snippets. To get the body of your snippet, type in `gsnip
+NAME` where `NAME` is of course the name identifier of the snippet. And that's
+it at this point.
 
 
 ## Installation

@@ -1,10 +1,11 @@
 # Gsnip
 
 This is my personal snippet manager. It offers some basic functionality. It
-lets you add, delete and insert snippets. You can also list out all your
-snippets with the `list` command. You would normally add your snippets to a
-text file where each snippet has to adhere to a predefined syntax that goes
-like this:
+lets you find and recover snippets found in the snippet source file. Insertion
+and deletion---at this stage---is done by editing the source file in an of
+choice.  You can list out all of your snippets with the `list` command. You
+would normally add your snippets to a text file where each snippet has to
+adhere to a predefined syntax that goes like this:
 
 ```
 startsnip NAME "COMMENT"
@@ -12,13 +13,18 @@ BODY
 endsnip
 ```
 
-`startsnip` and `endsnip` delimit the scope of a single snippet. `NAME` could
-be anything as long as i) it does not contain any whitespace characters *or* it
-is not a restriced `gsnip` command (for example, `list` would list out all the
-snippets found in the file). `COMMENT` should always be enclosed in double
-quotes. Finally `BODY` can be pretty much anything.
+`startsnip` and `endsnip` delimit the scope of a single snippet. They are used
+by the parser to identify the start and the end. There few more rules that have
+to be respected:
 
-Here is a list of restricted names (gsnip commands):
+1. `NAME` could be anything so long as it does not contain any white space
+   characters.
+2. `NAME` must not be a reserved `gsnip` command (e.g., `list` would list out
+   all the snippets found in the file).
+3. `COMMENT` should always be enclosed in double quotes.
+4. Finally, `BODY` can be pretty much anything.
+
+Here is a list of restricted names (`gsnip` commands):
 1. list
 
 

@@ -5,12 +5,16 @@ import (
 	"testing"
 )
 
-func TestMapLikeInterface(t *testing.T) {
-	ss := make(Snippets)
-	ss["func"] = Snippet{"func", "sample function", "xxx"}
-	_, ok := ss["func"]
+func TestContainerFindMethod(t *testing.T) {
+	var ss Container = make(Snippets)
+	ss.Insert(Snippet{
+		Name: "func",
+		Desc: "sample function",
+		Body: "xxx",
+	})
+	_, ok := ss.Find("func")
 	if !ok {
-		t.Error("Snippets cannot be used as a regular map")
+		t.Errorf("snippets fails to recover existing snippet")
 	}
 }
 

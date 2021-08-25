@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/mdm-code/gsnip/parsing"
+	"github.com/mdm-code/gsnip/snippets"
 )
 
 const Source = "/usr/local/share/gsnip/snippets"
@@ -33,7 +34,8 @@ func main() {
 	defer f.Close()
 
 	parser := parsing.NewParser()
-	snippets, err := parser.Parse(f)
+	var snippets snippets.Container
+	snippets, err = parser.Parse(f)
 	if err != nil {
 		log.Fatal(err)
 	}

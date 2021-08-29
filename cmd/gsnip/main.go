@@ -6,12 +6,19 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
+	"github.com/mdm-code/gsnip/manager"
 	"github.com/mdm-code/gsnip/parsing"
+	"github.com/mdm-code/gsnip/snippets"
 )
 
 const Source = "/usr/local/share/gsnip/snippets"
+
+// Check if there's anything to read on STDIN
+func isPiped() bool {
+	fi, _ := os.Stdin.Stat()
+	return (fi.Mode() & os.ModeCharDevice) == 0
+}
 
 func main() {
 	fn := flag.String("f", Source, "Snippets source file")
@@ -33,52 +40,29 @@ func main() {
 	defer f.Close()
 
 	parser := parsing.NewParser()
-	snippets, err := parser.Parse(f)
+	var snippets snippets.Container
+	snippets, err = parser.Parse(f)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	mgr, ok := manager.NewManager(snippets)
+	if !ok {
+		log.Fatal("failed to initialized snippet manager")
 	}
 
 	if isPiped() {
 		s := bufio.NewScanner(os.Stdin)
 		s.Split(bufio.ScanWords)
-		var attrs []string
+		var params []string
 		for s.Scan() {
-			attrs = append(attrs, s.Text())
+			params = append(params, s.Text())
 		}
 
-		var search string
-		var repls []string
-		if len(attrs) == 0 {
-			log.Fatal("There's nothing to find")
-		} else if len(attrs) == 1 {
-			search = attrs[0]
-		} else {
-			search, repls = attrs[0], attrs[1:]
+		output, err := mgr.Execute(params...)
+		if err != nil {
+			log.Fatal("failed to execute command: ", err)
 		}
-
-		cmd := strings.ToLower(search)
-		if parsing.IsCommand(cmd) && cmd == "list" {
-			out := snippets.List()
-			for _, s := range out {
-				os.Stdout.WriteString(s + "\n")
-			}
-		} else {
-			snip, ok := snippets.Find(search)
-			if !ok {
-				log.Fatal(search + " was not found")
-			}
-			pat := `\${[0-9]+:\w*}`
-			out, ok := parsing.Replace(snip.Body, pat, repls...)
-			if !ok {
-				log.Fatal("Failed to compile regex pattern: " + pat)
-			}
-			os.Stdout.WriteString(out)
-		}
+		os.Stdout.WriteString(output)
 	}
-}
-
-// Check if there's anything to read on STDIN
-func isPiped() bool {
-	fi, _ := os.Stdin.Stat()
-	return (fi.Mode() & os.ModeCharDevice) == 0
 }

@@ -12,6 +12,7 @@ run: build
 	./$(DEV_BIN)/gsnip -snippets snips
 
 test:
+	$(GO) clean -testcache
 	$(GO) test ./... -v
 
 install: test

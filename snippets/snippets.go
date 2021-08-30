@@ -17,19 +17,19 @@ type Snippet struct {
 	Body string
 }
 
-type Snippets map[string]Snippet
+type SnippetsMap map[string]Snippet
 
-func (s Snippets) Insert(snip Snippet) (success bool) {
+func (s SnippetsMap) Insert(snip Snippet) (success bool) {
 	s[snip.Name], success = snip, true
 	return
 }
 
-func (s Snippets) Find(str string) (snip Snippet, success bool) {
+func (s SnippetsMap) Find(str string) (snip Snippet, success bool) {
 	snip, success = s[str]
 	return
 }
 
-func (s Snippets) List() (result []string) {
+func (s SnippetsMap) List() (result []string) {
 	var str string
 	for _, v := range s {
 		str = fmt.Sprintf("%s\t%s", v.Name, v.Desc)

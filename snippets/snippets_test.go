@@ -6,7 +6,7 @@ import (
 )
 
 func TestContainerFindMethod(t *testing.T) {
-	var ss Container = make(Snippets)
+	var ss Container = make(SnippetsMap)
 	ss.Insert(Snippet{
 		Name: "func",
 		Desc: "sample function",
@@ -18,16 +18,16 @@ func TestContainerFindMethod(t *testing.T) {
 	}
 }
 
-func TestSnippetsInsert(t *testing.T) {
-	ss := make(Snippets)
+func TestSnippetsMapInsert(t *testing.T) {
+	ss := make(SnippetsMap)
 	ok := ss.Insert(Snippet{"name", "desc", "body"})
 	if !ok {
 		t.Error("Insert() fails to insert Snippet to map")
 	}
 }
 
-func TestSnippetsFind(t *testing.T) {
-	ss := make(Snippets)
+func TestSnippetsMapFind(t *testing.T) {
+	ss := make(SnippetsMap)
 	ss["func"] = Snippet{"func", "Go function", "func ${1:name} () {}"}
 	_, ok := ss.Find("func")
 	if !ok {
@@ -35,8 +35,8 @@ func TestSnippetsFind(t *testing.T) {
 	}
 }
 
-func TestSnippetsList(t *testing.T) {
-	ss := Snippets{
+func TestSnippetsMapList(t *testing.T) {
+	ss := SnippetsMap{
 		"func":   {"func", "Go function", "func() {}"},
 		"struct": {"struct", "Go struct", "type struct {}"},
 		"map":    {"map", "Go map", "map[string]string"},

@@ -46,7 +46,11 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 	m, _ := NewManager(c)
 	has, err := m.Execute("list")
 	var want string
-	for _, e := range c.List() {
+	listing, err := c.List()
+	if err != nil {
+		t.Error("failed to get a list of snippets")
+	}
+	for _, e := range listing {
 		want = want + e + "\n"
 	}
 	if err != nil {

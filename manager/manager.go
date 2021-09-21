@@ -33,26 +33,31 @@ func (m *manager) Execute(params ...string) (string, error) {
 	if parsing.IsCommand(cmd) {
 		if strings.ToLower(cmd) == "list" {
 			result := ""
-			for _, s := range m.c.List() {
+			listing, err := m.c.List()
+			if err != nil {
+				return "", fmt.Errorf("failed to list snippets")
+			}
+			for _, s := range listing {
 				result = result + s + "\n"
 			}
 			return result, nil
 		}
 		return "", fmt.Errorf("unimplemented command")
 	} else {
-		if searched, ok := m.c.Find(cmd); ok {
+		if searched, err := m.c.Find(cmd); err == nil {
 			pat := `\${[0-9]+:\w*}`
 			var repls []string
 			if len(params) > 1 {
 				repls = params[1:]
 			}
+			var ok bool
 			result, ok = parsing.Replace(searched.Body, pat, repls...)
 			if !ok {
 				return "", fmt.Errorf("failed to compile regex pattern: %s", pat)
 			}
 			return result, nil
 		} else {
-			return "", fmt.Errorf("%s was not found", searched)
+			return "", fmt.Errorf("%s was not found", cmd)
 		}
 	}
 }

@@ -56,7 +56,7 @@ God knows what this is.
 endsnip`),
 }
 
-var snips = snippets.Snippets{"func": funcSnip, "struct": structSnip}
+var snips = snippets.SnippetsMap{"func": funcSnip, "struct": structSnip}
 
 func TestParsing(t *testing.T) {
 	for _, r := range properReaders {

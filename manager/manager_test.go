@@ -7,14 +7,14 @@ import (
 )
 
 func TestNewProgramCreated(t *testing.T) {
-	_, ok := NewManager(make(snippets.Snippets))
+	_, ok := NewManager(make(snippets.SnippetsMap))
 	if !ok {
 		t.Error("Program object cannot be instantiated")
 	}
 }
 
 func TestProgramAcceptsFindCmd(t *testing.T) {
-	c := snippets.Snippets{
+	c := snippets.SnippetsMap{
 		"func": snippets.Snippet{
 			Name: "func",
 			Desc: "desc",
@@ -31,7 +31,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
-	c := snippets.Snippets{
+	c := snippets.SnippetsMap{
 		"func": snippets.Snippet{
 			Name: "func",
 			Desc: "simple function",
@@ -46,7 +46,11 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 	m, _ := NewManager(c)
 	has, err := m.Execute("list")
 	var want string
-	for _, e := range c.List() {
+	listing, err := c.List()
+	if err != nil {
+		t.Error("failed to get a list of snippets")
+	}
+	for _, e := range listing {
 		want = want + e + "\n"
 	}
 	if err != nil {
@@ -58,7 +62,7 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
-	m, _ := NewManager(snippets.Snippets{})
+	m, _ := NewManager(snippets.SnippetsMap{})
 	_, err := m.Execute("search")
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")

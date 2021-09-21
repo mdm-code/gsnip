@@ -84,34 +84,58 @@ func isPiped() bool {
 }
 
 func main() {
-	fn := flag.String("f", Source, "Snippets source file")
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Snippet manager written in Go.\n\nUsage:\n")
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-
-	var f *os.File
-	f, err := os.Open(*fn)
+	flg, err := parseFlags()
 	if err != nil {
-		log.Fatal("Could not open " + *fn)
-		f, err = os.Open(Source)
+		fmt.Fprint(os.Stderr, "failed to parse command line arguments")
+		os.Exit(1)
+	}
+
+	var snpts snippets.Container
+
+	switch flg.mode {
+	case "db":
+		dsn := fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			*flg.host,
+			*flg.port,
+			*flg.user,
+			*flg.password,
+			*flg.dbName,
+		)
+		snpts, err = snippets.NewSnippetsDB("postgres", dsn)
 		if err != nil {
-			log.Fatal("Could not find " + Source)
+			fmt.Fprintf(os.Stderr, "failed to set up snippet container due to %s", err)
+			os.Exit(1)
 		}
+	case "file":
+		var f *os.File
+		f, err := os.Open(*flg.fName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "could not open %s\n", *flg.fName)
+			os.Exit(1)
+			f, err = os.Open(Source)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "could not find %s\n", Source)
+				os.Exit(1)
+			}
+		}
+		defer f.Close()
+		parser := parsing.NewParser()
+		snpts, err = parser.Parse(f)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err)
+		}
+	case "-h", "-help", "--help":
+		flag.Usage()
+	default:
+		fmt.Fprintf(os.Stderr, "expected `db` or `file` mode")
+		os.Exit(1)
 	}
-	defer f.Close()
 
-	parser := parsing.NewParser()
-	var snippets snippets.Container
-	snippets, err = parser.Parse(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	mgr, ok := manager.NewManager(snippets)
+	mgr, ok := manager.NewManager(snpts)
 	if !ok {
-		log.Fatal("failed to initialized snippet manager")
+		fmt.Fprint(os.Stderr, "failed to initialized snippet manager")
+		os.Exit(1)
 	}
 
 	if isPiped() {
@@ -124,7 +148,8 @@ func main() {
 
 		output, err := mgr.Execute(params...)
 		if err != nil {
-			log.Fatal("failed to execute command: ", err)
+			fmt.Fprintf(os.Stderr, "failed to execute: %s", err)
+			os.Exit(1)
 		}
 		os.Stdout.WriteString(output)
 	}

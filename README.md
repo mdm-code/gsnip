@@ -40,6 +40,16 @@ NAME` where `NAME` is of course the name identifier of the snippet. And that's
 it at this point.
 
 
+## Use cases
+
+1. Printing out the body of all snippets on the command line. It requires some
+   juggling with `awk` and `xargs`, but nothing all too serious.
+
+```sh
+echo list | gsnip | awk  -F'\t' '{ print $1 }' | xargs -I {} zsh -c 'echo {} | gsnip'
+```
+
+
 ## Installation
 
 Consult `Makefile`; there is the `install` directive that you would call with

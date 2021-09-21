@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mdm-code/gsnip/manager"
@@ -14,6 +13,70 @@ import (
 
 const Source = "/usr/local/share/gsnip/snippets"
 
+type flags struct {
+	dbMode   *flag.FlagSet
+	fMode    *flag.FlagSet
+	dbName   *string
+	user     *string
+	password *string
+	port     *int
+	host     *string
+	fName    *string
+	mode     string
+}
+
+// TODO: Split to two different commands
+// NOTE: https://github.com/calmh/mole/blob/master/cmd/mole/main.go
+func parseFlags() (flags, error) {
+	a := flags{}
+	a.dbMode = flag.NewFlagSet("db", flag.ExitOnError)
+	a.fMode = flag.NewFlagSet("file", flag.ExitOnError)
+
+	a.dbName = a.dbMode.String("name", "gsnipdb", "database name")
+	a.user = a.dbMode.String("user", "michal", "database user name")
+	a.password = a.dbMode.String("pass", "dummy-pass", "database password")
+	a.port = a.dbMode.Int("port", 5432, "database postgresql port")
+	a.host = a.dbMode.String("host", "localhost", "postgresql host")
+
+	a.fName = a.fMode.String("name", Source, "source file with snippets")
+
+	if len(os.Args) < 2 {
+		a.mode = "file"
+	} else {
+		a.mode = os.Args[1]
+	}
+
+	var args []string
+	if len(os.Args) >= 3 {
+		args = os.Args[2:]
+	}
+
+	switch a.mode {
+	case "db":
+		err := a.dbMode.Parse(args)
+		if err != nil {
+			return a, err
+		}
+	case "file":
+		err := a.fMode.Parse(args)
+		if err != nil {
+			return a, err
+		}
+	default:
+		return a, fmt.Errorf("unknown mode")
+	}
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Snippet manager written in Go.\n")
+		fmt.Fprintf(os.Stderr, "Usage of db:\n")
+		a.dbMode.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "Usage of file:\n")
+		a.fMode.PrintDefaults()
+	}
+	return a, nil
+}
+
 // Check if there's anything to read on STDIN
 func isPiped() bool {
 	fi, _ := os.Stdin.Stat()
@@ -21,34 +84,58 @@ func isPiped() bool {
 }
 
 func main() {
-	fn := flag.String("f", Source, "Snippets source file")
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Snippet manager written in Go.\n\nUsage:\n")
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-
-	var f *os.File
-	f, err := os.Open(*fn)
+	flg, err := parseFlags()
 	if err != nil {
-		log.Fatal("Could not open " + *fn)
-		f, err = os.Open(Source)
+		fmt.Fprint(os.Stderr, "failed to parse command line arguments")
+		os.Exit(1)
+	}
+
+	var snpts snippets.Container
+
+	switch flg.mode {
+	case "db":
+		dsn := fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			*flg.host,
+			*flg.port,
+			*flg.user,
+			*flg.password,
+			*flg.dbName,
+		)
+		snpts, err = snippets.NewSnippetsDB("postgres", dsn)
 		if err != nil {
-			log.Fatal("Could not find " + Source)
+			fmt.Fprintf(os.Stderr, "failed to set up snippet container due to %s", err)
+			os.Exit(1)
 		}
+	case "file":
+		var f *os.File
+		f, err := os.Open(*flg.fName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "could not open %s\n", *flg.fName)
+			os.Exit(1)
+			f, err = os.Open(Source)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "could not find %s\n", Source)
+				os.Exit(1)
+			}
+		}
+		defer f.Close()
+		parser := parsing.NewParser()
+		snpts, err = parser.Parse(f)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err)
+		}
+	case "-h", "-help", "--help":
+		flag.Usage()
+	default:
+		fmt.Fprintf(os.Stderr, "expected `db` or `file` mode")
+		os.Exit(1)
 	}
-	defer f.Close()
 
-	parser := parsing.NewParser()
-	var snippets snippets.Container
-	snippets, err = parser.Parse(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	mgr, ok := manager.NewManager(snippets)
+	mgr, ok := manager.NewManager(snpts)
 	if !ok {
-		log.Fatal("failed to initialized snippet manager")
+		fmt.Fprint(os.Stderr, "failed to initialized snippet manager")
+		os.Exit(1)
 	}
 
 	if isPiped() {
@@ -61,7 +148,8 @@ func main() {
 
 		output, err := mgr.Execute(params...)
 		if err != nil {
-			log.Fatal("failed to execute command: ", err)
+			fmt.Fprintf(os.Stderr, "failed to execute: %s", err)
+			os.Exit(1)
 		}
 		os.Stdout.WriteString(output)
 	}

@@ -57,7 +57,7 @@ func (m *manager) Execute(params ...string) (string, error) {
 			}
 			return result, nil
 		} else {
-			return "", fmt.Errorf("%s was not found", searched)
+			return "", fmt.Errorf("%s was not found", cmd)
 		}
 	}
 }

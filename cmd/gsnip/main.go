@@ -11,70 +11,50 @@ import (
 	"github.com/mdm-code/gsnip/snippets"
 )
 
-const Source = "/usr/local/share/gsnip/snippets"
+const Src = "/usr/local/share/gsnip/snippets"
 
-type flags struct {
-	dbMode   *flag.FlagSet
-	fMode    *flag.FlagSet
-	dbName   *string
-	user     *string
-	password *string
-	port     *int
-	host     *string
-	fName    *string
-	mode     string
-}
+var (
+	fCmd  *flag.FlagSet
+	dbCmd *flag.FlagSet
+	src   string
+	dbnm  string
+	mode  string
+	user  string
+	pswd  string
+	port  string
+	host  string
+)
 
-// TODO: Split to two different commands
-// NOTE: https://github.com/calmh/mole/blob/master/cmd/mole/main.go
-func parseFlags() (flags, error) {
-	a := flags{}
-	a.dbMode = flag.NewFlagSet("db", flag.ExitOnError)
-	a.fMode = flag.NewFlagSet("file", flag.ExitOnError)
+// Parse command-line subcommands
+func parseFlags(args []string) error {
+	fCmd = flag.NewFlagSet("file", flag.ExitOnError)
+	dbCmd = flag.NewFlagSet("db", flag.ExitOnError)
 
-	a.dbName = a.dbMode.String("name", "gsnipdb", "database name")
-	a.user = a.dbMode.String("user", "michal", "database user name")
-	a.password = a.dbMode.String("pass", "dummy-pass", "database password")
-	a.port = a.dbMode.Int("port", 5432, "database postgresql port")
-	a.host = a.dbMode.String("host", "localhost", "postgresql host")
-
-	a.fName = a.fMode.String("name", Source, "source file with snippets")
+	fCmd.StringVar(&src, "src", Src, "source name")
+	dbCmd.StringVar(&dbnm, "dbnm", dbnm, "db name")
+	dbCmd.StringVar(&user, "user", user, "db user name")
+	dbCmd.StringVar(&pswd, "pswd", pswd, "db password")
+	dbCmd.StringVar(&port, "port", port, "db port")
+	dbCmd.StringVar(&host, "host", host, "db host")
 
 	if len(os.Args) < 2 {
-		a.mode = "file"
-	} else {
-		a.mode = os.Args[1]
+		return fmt.Errorf("file or db subcommand is required")
 	}
 
-	var args []string
-	if len(os.Args) >= 3 {
-		args = os.Args[2:]
-	}
-
-	switch a.mode {
-	case "db":
-		err := a.dbMode.Parse(args)
-		if err != nil {
-			return a, err
-		}
+	var err error
+	switch os.Args[1] {
 	case "file":
-		err := a.fMode.Parse(args)
-		if err != nil {
-			return a, err
-		}
+		err = fCmd.Parse(os.Args[2:])
+	case "db":
+		err = dbCmd.Parse(os.Args[2:])
 	default:
-		return a, fmt.Errorf("unknown mode")
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
-
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Snippet manager written in Go.\n")
-		fmt.Fprintf(os.Stderr, "Usage of db:\n")
-		a.dbMode.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "Usage of file:\n")
-		a.fMode.PrintDefaults()
+	if err != nil {
+		return err
 	}
-	return a, nil
+	return nil
 }
 
 // Check if there's anything to read on STDIN
@@ -84,38 +64,37 @@ func isPiped() bool {
 }
 
 func main() {
-	flg, err := parseFlags()
+	var snpts snippets.Container
+
+	err := parseFlags(os.Args)
 	if err != nil {
 		fmt.Fprint(os.Stderr, "failed to parse command line arguments")
 		os.Exit(1)
 	}
 
-	var snpts snippets.Container
-
-	switch flg.mode {
-	case "db":
+	if dbCmd.Parsed() {
 		dsn := fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			*flg.host,
-			*flg.port,
-			*flg.user,
-			*flg.password,
-			*flg.dbName,
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			host,
+			port,
+			user,
+			pswd,
+			dbnm,
 		)
 		snpts, err = snippets.NewSnippetsDB("postgres", dsn)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to set up snippet container due to %s", err)
 			os.Exit(1)
 		}
-	case "file":
+	} else if fCmd.Parsed() {
 		var f *os.File
-		f, err := os.Open(*flg.fName)
+		f, err := os.Open(src)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "could not open %s\n", *flg.fName)
+			fmt.Fprintf(os.Stderr, "could not open %s\n", src)
 			os.Exit(1)
-			f, err = os.Open(Source)
+			f, err = os.Open(Src)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "could not find %s\n", Source)
+				fmt.Fprintf(os.Stderr, "could not find %s\n", Src)
 				os.Exit(1)
 			}
 		}
@@ -125,10 +104,8 @@ func main() {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s", err)
 		}
-	case "-h", "-help", "--help":
-		flag.Usage()
-	default:
-		fmt.Fprintf(os.Stderr, "expected `db` or `file` mode")
+	} else {
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 

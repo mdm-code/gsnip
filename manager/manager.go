@@ -8,13 +8,13 @@ import (
 	"github.com/mdm-code/gsnip/snippets"
 )
 
-type manager struct {
+type Manager struct {
 	c snippets.Container
 }
 
 // Create a fresh instance of a program manager.
-func NewManager(c snippets.Container) (manager, bool) {
-	return manager{c: c}, true
+func NewManager(c snippets.Container) (Manager, bool) {
+	return Manager{c: c}, true
 }
 
 /* Execute a command on the snippet container.
@@ -24,7 +24,7 @@ At this moment, it is possible to perform two actions:
 1. List out all snippets stored in a container
 2. Retrieve the body of a searched snippet with optional replacements
 */
-func (m *manager) Execute(params ...string) (string, error) {
+func (m *Manager) Execute(params ...string) (string, error) {
 	var result string
 	if len(params) == 0 {
 		return "", fmt.Errorf("there is nothing to find")

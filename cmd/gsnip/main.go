@@ -39,7 +39,7 @@ func main() {
 			continue
 
 		}
-		fmt.Fprintf(os.Stdout, "%s", buf[:n])
+		fmt.Fprintf(os.Stdout, "%s\n", buf[:n])
 	}
 }
 

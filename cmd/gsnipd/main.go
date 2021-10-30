@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/mdm-code/gsnip/manager"
 	"github.com/mdm-code/gsnip/parsing"
@@ -15,13 +17,17 @@ const src = "/usr/local/share/gsnip/snippets"
 
 var (
 	port int
+	addr string
 	file string
 )
 
 func main() {
 	flag.IntVar(&port, "port", 7862, "UDP server port")
+	flag.StringVar(&addr, "addr", "127.0.0.1", "UDP server IP address")
+	flag.StringVar(&file, "file", src, "snippet source file")
+
 	addr := net.UDPAddr{
-		IP:   net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP(addr),
 		Port: port,
 	}
 	conn, err := net.ListenUDP("udp", &addr)
@@ -34,12 +40,28 @@ func main() {
 
 	mgr := getSnippetContainer()
 
+	// Hot reload config file on SIGHUP.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGHUP)
+	go func() {
+		for {
+			select {
+			case <-sigs:
+				msgf("INFO", fmt.Sprintf("reload snippet source file"))
+				mgr = getSnippetContainer()
+			}
+		}
+	}()
+
 	for {
 		buf := make([]byte, 512)
 		length, rAddr, err := conn.ReadFromUDP(buf)
-		fmt.Fprintf(os.Stdout, "gsnipd READ FROM %v: %s\n", rAddr, buf)
+		fmt.Fprintf(
+			os.Stdout,
+			msgf("READ", fmt.Sprintf("%s FROM %v", buf, rAddr)),
+		)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "gsnipd ERROR: %s\n", err)
+			msgf("ERROR", err)
 			continue
 		}
 		go respond(conn, rAddr, &mgr, buf[:length])
@@ -53,7 +75,7 @@ func msgf(class, msg interface{}) string {
 func getSnippetContainer() manager.Manager {
 	var snpts snippets.Container
 	var f *os.File
-	f, err := os.Open(src)
+	f, err := os.Open(file)
 	if err != nil {
 		fmt.Fprintf(
 			os.Stderr,

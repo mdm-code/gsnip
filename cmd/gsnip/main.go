@@ -12,6 +12,7 @@ func main() {
 	var addr, port string
 	flag.StringVar(&addr, "addr", "127.0.0.1", "server address")
 	flag.StringVar(&port, "port", "7862", "server port")
+	flag.Parse()
 	conn, err := net.Dial("udp", addr+":"+port)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)

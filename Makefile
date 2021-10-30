@@ -7,6 +7,7 @@ mkbin:
 
 build:
 	go build $(GOFLAGS) -o $(DEV_BIN)/gsnip cmd/gsnip/main.go
+	go build $(GOFLAGS) -o $(DEV_BIN)/gsnipd cmd/gsnipd/main.go
 
 run: build
 	./$(DEV_BIN)/gsnip -snippets snips

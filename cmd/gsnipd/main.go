@@ -19,6 +19,7 @@ var (
 	port int
 	addr string
 	file string
+	sigs chan os.Signal
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 	mgr := getSnippetContainer()
 
 	// Hot reload config file on SIGHUP.
-	sigs := make(chan os.Signal, 1)
+	sigs = make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGHUP)
 	go func() {
 		for {
@@ -62,7 +63,7 @@ func main() {
 		length, rAddr, err := conn.ReadFromUDP(buf)
 		fmt.Fprintf(
 			os.Stdout,
-			msgf("READ", fmt.Sprintf("%s FROM %v", buf, rAddr)),
+			msgf("INFO", fmt.Sprintf("read %s from %v", buf, rAddr)),
 		)
 		if err != nil {
 			msgf("ERROR", err)
@@ -114,21 +115,33 @@ func getSnippetContainer() manager.Manager {
 }
 
 func respond(conn *net.UDPConn, addr *net.UDPAddr, m *manager.Manager, buf []byte) {
-	output, err := m.Execute(string(buf))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, msgf("ERROR", err))
-		_, err = conn.WriteToUDP([]byte("ERROR"), addr)
+	inMsg := string(buf)
+	switch inMsg {
+	case "reload":
+		sigs <- syscall.SIGHUP
+		_, err := conn.WriteToUDP([]byte(``), addr)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, msgf("ERROR", err))
 			return
 		}
 		return
+	default:
+		res, err := m.Execute(inMsg)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, msgf("ERROR", err))
+			_, err = conn.WriteToUDP([]byte("ERROR"), addr)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, msgf("ERROR", err))
+				return
+			}
+			return
+		}
+		outMsg := []byte(res)
+		_, err = conn.WriteToUDP(outMsg, addr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, msgf("ERROR", err))
+			return
+		}
+		fmt.Fprintf(os.Stdout, msgf("INFO", "write successful"))
 	}
-	msg := []byte(output)
-	_, err = conn.WriteToUDP(msg, addr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, msgf("ERROR", err))
-		return
-	}
-	fmt.Fprintf(os.Stdout, msgf("WRITE", "success"))
 }

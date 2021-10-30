@@ -48,7 +48,10 @@ func main() {
 		for {
 			select {
 			case <-sigs:
-				msgf("INFO", fmt.Sprintf("reload snippet source file"))
+				fmt.Fprintf(
+					os.Stdout,
+					msgf("INFO", fmt.Sprintf("reload snippet source file")),
+				)
 				mgr = getSnippetContainer()
 			}
 		}

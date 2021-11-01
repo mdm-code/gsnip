@@ -6,22 +6,16 @@ import (
 	"github.com/mdm-code/gsnip/snippets"
 )
 
-func TestNewProgramCreated(t *testing.T) {
-	_, ok := NewManager(make(snippets.SnippetsMap))
-	if !ok {
-		t.Error("Program object cannot be instantiated")
-	}
-}
-
 func TestProgramAcceptsFindCmd(t *testing.T) {
-	c := snippets.SnippetsMap{
-		"func": snippets.Snippet{
-			Name: "func",
-			Desc: "desc",
-			Body: "body",
-		},
+	c := snippets.NewSnippetsMap()
+
+	s := snippets.Snippet{
+		Name: "func",
+		Desc: "desc",
+		Body: "body",
 	}
-	m, _ := NewManager(c)
+	c.Insert(s)
+	m := newManager(c)
 	params := []string{"func"}
 	has, err := m.Execute(params...)
 	want, _ := c.Find("func")
@@ -31,19 +25,18 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
-	c := snippets.SnippetsMap{
-		"func": snippets.Snippet{
-			Name: "func",
-			Desc: "simple function",
-			Body: "body",
-		},
-		"method": snippets.Snippet{
-			Name: "method",
-			Desc: "class method",
-			Body: "body",
-		},
-	}
-	m, _ := NewManager(c)
+	c := snippets.NewSnippetsMap()
+	c.Insert(snippets.Snippet{
+		Name: "func",
+		Desc: "simple function",
+		Body: "body",
+	})
+	c.Insert(snippets.Snippet{
+		Name: "method",
+		Desc: "class method",
+		Body: "body",
+	})
+	m := newManager(c)
 	has, err := m.Execute("list")
 	var want string
 	listing, err := c.List()
@@ -62,7 +55,8 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
-	m, _ := NewManager(snippets.SnippetsMap{})
+	snips := snippets.NewSnippetsMap()
+	m := newManager(snips)
 	_, err := m.Execute("search")
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")

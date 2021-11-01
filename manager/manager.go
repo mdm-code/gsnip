@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/mdm-code/gsnip/parsing"
@@ -12,9 +13,24 @@ type Manager struct {
 	c snippets.Container
 }
 
-// Create a fresh instance of a program manager.
-func NewManager(c snippets.Container) (Manager, bool) {
-	return Manager{c: c}, true
+func NewManager(fname string) (*Manager, error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "gsnipd ERROR: %s", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	parser := parsing.NewParser()
+	snpts, err := parser.Parse(f)
+	if err != nil {
+		return newManager(nil), err
+	}
+	return newManager(snpts), nil
+}
+
+func newManager(snpts *snippets.SnippetsMap) *Manager {
+	return &Manager{c: snpts}
 }
 
 /* Execute a command on the snippet container.

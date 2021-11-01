@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"sync"
 
 	_ "github.com/lib/pq"
 )
@@ -20,7 +21,16 @@ type Snippet struct {
 	Body string
 }
 
-type SnippetsMap map[string]Snippet
+type SnippetsMap struct {
+	cntr map[string]Snippet
+	sync.Mutex
+}
+
+func NewSnippetsMap() *SnippetsMap {
+	return &SnippetsMap{
+		cntr: make(map[string]Snippet),
+	}
+}
 
 type SnippetsDB struct {
 	db *sql.DB
@@ -38,28 +48,34 @@ func NewSnippetsDB(dialect string, dsn string) (Container, error) {
 	return &SnippetsDB{db}, nil
 }
 
-func (s SnippetsMap) Insert(snip Snippet) (err error) {
-	s[snip.Name], err = snip, nil
+func (s *SnippetsMap) Insert(snip Snippet) (err error) {
+	s.Lock()
+	s.cntr[snip.Name], err = snip, nil
+	s.Unlock()
 	return
 }
 
-func (s SnippetsMap) Find(str string) (Snippet, error) {
+func (s *SnippetsMap) Find(str string) (Snippet, error) {
+	s.Lock()
+	defer s.Unlock()
 	var snip Snippet
-	snip, ok := s[str]
+	snip, ok := s.cntr[str]
 	if !ok {
 		return snip, fmt.Errorf("snippet was not found")
 	}
 	return snip, nil
 }
 
-func (s SnippetsMap) List() ([]string, error) {
+func (s *SnippetsMap) List() ([]string, error) {
+	s.Lock()
 	var result []string
 	var str string
-	for _, v := range s {
+	for _, v := range s.cntr {
 		str = fmt.Sprintf("%s\t%s", v.Name, v.Desc)
 		result = append(result, str)
 	}
 	sort.Strings(result)
+	s.Unlock()
 	return result, nil
 }
 

@@ -55,14 +55,14 @@ func NewParser() Parser {
 
 // Parse file with snippets. The result is a map
 // of of snippets with name as key and body as value.
-func (p *Parser) Parse(i io.Reader) (snippets.SnippetsMap, error) {
-	result := make(snippets.SnippetsMap)
+func (p *Parser) Parse(i io.Reader) (*snippets.SnippetsMap, error) {
+	result := snippets.NewSnippetsMap()
 	parsed, err := p.sm.run(i)
 	if err != nil {
 		return result, err
 	}
 	for _, s := range parsed {
-		result[s.Name] = s
+		result.Insert(s)
 	}
 	return result, nil
 }

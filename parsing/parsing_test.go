@@ -56,14 +56,15 @@ God knows what this is.
 endsnip`),
 }
 
-var snips = snippets.SnippetsMap{"func": funcSnip, "struct": structSnip}
-
 func TestParsing(t *testing.T) {
+	snips := snippets.NewSnippetsMap()
+	snips.Insert(funcSnip)
+	snips.Insert(structSnip)
 	for _, r := range properReaders {
 		parser := NewParser()
 		has, _ := parser.Parse(r)
 		if ok := reflect.DeepEqual(has, snips); !ok {
-			t.Errorf("want: %s; has %s", snips, has)
+			t.Errorf("want: %v; has %v", snips, has)
 		}
 	}
 }

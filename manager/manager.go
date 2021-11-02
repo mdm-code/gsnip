@@ -60,7 +60,9 @@ func (m *Manager) Execute(params ...string) (string, error) {
 		}
 		return "", fmt.Errorf("unimplemented command")
 	} else {
-		if searched, err := m.c.Find(cmd); err == nil {
+		if searched, err := m.c.Find(cmd); err != nil {
+			return "", fmt.Errorf("%s was not found", cmd)
+		} else {
 			pat := `\${[0-9]+:\w*}`
 			var repls []string
 			if len(params) > 1 {
@@ -72,8 +74,6 @@ func (m *Manager) Execute(params ...string) (string, error) {
 				return "", fmt.Errorf("failed to compile regex pattern: %s", pat)
 			}
 			return result, nil
-		} else {
-			return "", fmt.Errorf("%s was not found", cmd)
 		}
 	}
 }

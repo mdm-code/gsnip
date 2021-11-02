@@ -56,15 +56,15 @@ func NewParser() Parser {
 // Parse file with snippets. The result is a map
 // of of snippets with name as key and body as value.
 func (p *Parser) Parse(i io.Reader) (*snippets.SnippetsMap, error) {
-	result := snippets.NewSnippetsMap()
+	smap := snippets.NewSnippetsMap()
 	parsed, err := p.sm.run(i)
 	if err != nil {
-		return result, err
+		return smap, err
 	}
 	for _, s := range parsed {
-		result.Insert(s)
+		smap.Insert(s)
 	}
-	return result, nil
+	return smap, nil
 }
 
 func (sm *StateMachine) scanLine(line string) (State, string) {
@@ -93,7 +93,7 @@ func splitSignature(s string) ([]string, bool) {
 	unpack(splits, &startToken, &name, &comment)
 	comment, ok := takeBetween(comment, '"')
 	if !ok {
-		return []string{}, false
+		return nil, false
 	}
 	return []string{name, comment}, true
 }
@@ -135,7 +135,7 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 	var line string
 	for {
 		if sm.state == ERROR {
-			return []snippets.Snippet{}, fmt.Errorf("Error on line: %s", line)
+			return nil, fmt.Errorf("Error on line: %s", line)
 		}
 		if line == "" {
 			if ok := s.Scan(); !ok {

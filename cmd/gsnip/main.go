@@ -12,6 +12,7 @@ func main() {
 	var addr, port string
 	flag.StringVar(&addr, "addr", "127.0.0.1", "server address")
 	flag.StringVar(&port, "port", "7862", "server port")
+	setupFlags(flag.CommandLine)
 	flag.Parse()
 	conn, err := net.Dial("udp", addr+":"+port)
 	if err != nil {
@@ -41,6 +42,14 @@ func main() {
 
 		}
 		fmt.Fprintf(os.Stdout, "%s\n", buf[:n])
+	}
+}
+
+func setupFlags(f *flag.FlagSet) {
+	f.Usage = func() {
+		fmt.Fprintf(f.Output(), "Usage of %s:\n\n", os.Args[0])
+		fmt.Fprintf(f.Output(), "Use |, < or named pipe to send input.\n\n")
+		f.PrintDefaults()
 	}
 }
 

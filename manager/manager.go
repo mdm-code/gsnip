@@ -45,6 +45,7 @@ func (m *Manager) Execute(params ...string) (string, error) {
 		return "", fmt.Errorf("there is nothing to find")
 	}
 	cmd := params[0]
+	// TODO: Evaluate here if cmd in switch statement -- dependency
 	if parsing.IsCommand(cmd) {
 		if cmd == "@LIST" {
 			result := ""
@@ -62,6 +63,7 @@ func (m *Manager) Execute(params ...string) (string, error) {
 		if searched, err := m.c.Find(cmd); err != nil {
 			return "", fmt.Errorf("%s was not found", cmd)
 		} else {
+			// TODO: Replacement is no longer supported -- delete it
 			pat := `\${[0-9]+:\w*}`
 			var repls []string
 			if len(params) > 1 {

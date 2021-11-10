@@ -61,6 +61,7 @@ func NewServer(ntwrk string, addr string, port int, fname string) (Server, error
 }
 
 func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
+	// TODO: Instantiate evaluator here and pass it to both Manager & Server
 	m, err := manager.NewManager(fname)
 	if err != nil {
 		return nil, err
@@ -121,6 +122,7 @@ func (s *UDPServer) AwaitConn() {
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 	inMsg := string(buff)
+	// TODO: Evaluate signal here
 	switch inMsg {
 	case "@RELOAD":
 		s.sigs <- syscall.SIGHUP

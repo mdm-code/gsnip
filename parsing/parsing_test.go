@@ -171,8 +171,8 @@ func TestCheckIfIsCommand(t *testing.T) {
 		cmd      string
 		expected bool
 	}{
-		{"list", true},
-		{"prune", false},
+		{"@LIST", true},
+		{"@PRUNE", false},
 		{"", false},
 	}
 	for _, i := range inputs {
@@ -184,7 +184,7 @@ func TestCheckIfIsCommand(t *testing.T) {
 }
 
 func TestParsingFailsOnCmd(t *testing.T) {
-	line := "startsnip list \"Signature of a command to fail\""
+	line := "startsnip @LIST \"Signature of a command to fail\""
 	sm := newStateMachine()
 	state, line := sm.readSignature(line)
 	if state != ERROR {

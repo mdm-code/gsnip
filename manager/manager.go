@@ -3,7 +3,6 @@ package manager
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/mdm-code/gsnip/parsing"
 	"github.com/mdm-code/gsnip/snippets"
@@ -45,9 +44,9 @@ func (m *Manager) Execute(params ...string) (string, error) {
 	if len(params) == 0 {
 		return "", fmt.Errorf("there is nothing to find")
 	}
-	cmd := strings.ToLower(params[0])
+	cmd := params[0]
 	if parsing.IsCommand(cmd) {
-		if strings.ToLower(cmd) == "list" {
+		if cmd == "@LIST" {
 			result := ""
 			listing, err := m.c.List()
 			if err != nil {

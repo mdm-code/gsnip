@@ -122,7 +122,7 @@ func (s *UDPServer) AwaitConn() {
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 	inMsg := string(buff)
 	switch inMsg {
-	case "reload":
+	case "@RELOAD":
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {

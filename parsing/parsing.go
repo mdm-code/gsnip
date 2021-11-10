@@ -17,8 +17,16 @@ const (
 	ERROR
 )
 
+// TODO: Turn cmd into a struct with hierarchy
+/*
+	Signal
+	CmdSignal
+	ServerCmd
+	ManagerCmd
+	???
+*/
 var cmds = []string{
-	"list",
+	"@LIST",
 }
 
 type State uint8
@@ -79,7 +87,7 @@ func (sm *StateMachine) readSignature(line string) (State, string) {
 	if !ok {
 		return ERROR, line
 	}
-	if IsCommand(strings.ToLower(elems[0])) {
+	if IsCommand(elems[0]) {
 		return ERROR, line
 	}
 	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}

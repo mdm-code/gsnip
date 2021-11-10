@@ -37,7 +37,7 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 		Body: "body",
 	})
 	m := newManager(c)
-	has, err := m.Execute("list")
+	has, err := m.Execute("@LIST")
 	var want string
 	listing, err := c.List()
 	if err != nil {

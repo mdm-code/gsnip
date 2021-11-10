@@ -25,7 +25,10 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
-	c := snippets.NewSnippetsMap()
+	c, err := snippets.NewSnippetsContainer("map")
+	if err != nil {
+		t.Error("failed to create snippet container")
+	}
 	c.Insert(snippets.Snippet{
 		Name: "func",
 		Desc: "simple function",
@@ -55,9 +58,12 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
-	snips := snippets.NewSnippetsMap()
+	snips, err := snippets.NewSnippetsContainer("map")
+	if err != nil {
+		t.Error("failed to create snippet container")
+	}
 	m := newManager(snips)
-	_, err := m.Execute("search")
+	_, err = m.Execute("search")
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")
 	}

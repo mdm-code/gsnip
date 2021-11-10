@@ -57,7 +57,10 @@ endsnip`),
 }
 
 func TestParsing(t *testing.T) {
-	snips := snippets.NewSnippetsMap()
+	snips, err := snippets.NewSnippetsContainer("map")
+	if err != nil {
+		t.Error("failed to create snippet container")
+	}
 	snips.Insert(funcSnip)
 	snips.Insert(structSnip)
 	for _, r := range properReaders {

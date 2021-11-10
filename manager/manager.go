@@ -28,7 +28,7 @@ func NewManager(fname string) (*Manager, error) {
 	return newManager(snpts), nil
 }
 
-func newManager(snpts *snippets.SnippetsMap) *Manager {
+func newManager(snpts snippets.Container) *Manager {
 	return &Manager{c: snpts}
 }
 

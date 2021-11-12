@@ -3,6 +3,7 @@ package manager
 import (
 	"testing"
 
+	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
 )
 
@@ -16,8 +17,10 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 	}
 	c.Insert(s)
 	m := newManager(c)
-	params := []string{"func"}
-	has, err := m.Execute(params...)
+	input := "func"
+	interp := signals.NewInterpreter()
+	tkn := interp.Eval(input)
+	has, err := m.Execute(tkn)
 	want, _ := c.Find("func")
 	if err != nil || has != want.Body {
 		t.Error("executing find fails")
@@ -40,7 +43,9 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 		Body: "body",
 	})
 	m := newManager(c)
-	has, err := m.Execute("@LIST")
+	interp := signals.NewInterpreter()
+	tkn := interp.Eval("@LIST")
+	has, err := m.Execute(tkn)
 	var want string
 	listing, err := c.List()
 	if err != nil {
@@ -63,7 +68,9 @@ func TestUnrecognizedInputFails(t *testing.T) {
 		t.Error("failed to create snippet container")
 	}
 	m := newManager(snips)
-	_, err = m.Execute("search")
+	interp := signals.NewInterpreter()
+	tkn := interp.Eval("search")
+	_, err = m.Execute(tkn)
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")
 	}

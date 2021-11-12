@@ -1,16 +1,19 @@
 package signals
 
-import "strings"
+import (
+	"strings"
+)
 
 type dep int8
 
 const (
 	srvr dep = iota
 	mngr
+	unbound
 )
 
 type Token struct {
-	sign string
+	Sign string
 	cmd  bool
 	ref  dep
 }
@@ -20,17 +23,28 @@ func (t Token) IsCmd() bool {
 }
 
 func (t Token) IsReload() bool {
-	return t.sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
+	return t.Sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
+}
+
+func (t Token) IsList() bool {
+	return t.Sign == "@LIST" && t.IsCmd() && t.ref == mngr
+}
+
+func (t Token) IsUnbound() bool {
+	if t.ref == unbound {
+		return true
+	}
+	return false
 }
 
 var cmds = []Token{
 	{
-		sign: "@LIST",
+		Sign: "@LIST",
 		cmd:  true,
 		ref:  mngr,
 	},
 	{
-		sign: "@RELOAD",
+		Sign: "@RELOAD",
 		cmd:  true,
 		ref:  srvr,
 	},
@@ -49,10 +63,13 @@ func NewInterpreter() Interpreter {
 
 func (i Interpreter) Eval(s string) Token {
 	s = strings.TrimSpace(s)
+	if s == "" {
+		return Token{Sign: "", cmd: false, ref: unbound}
+	}
 	for _, c := range i.cmds {
-		if s == c.sign {
+		if s == c.Sign {
 			return c
 		}
 	}
-	return Token{sign: s, cmd: false, ref: mngr}
+	return Token{Sign: s, cmd: false, ref: mngr}
 }

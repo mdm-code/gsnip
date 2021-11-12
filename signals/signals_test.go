@@ -26,9 +26,9 @@ func TestEvalToken(t *testing.T) {
 		in   string
 		want Token
 	}{
-		{"pyclass", Token{sign: "pyclass", cmd: false, ref: mngr}},
-		{"pyfunc ", Token{sign: "pyfunc", cmd: false, ref: mngr}},
-		{"  gfunc  ", Token{sign: "gfunc", cmd: false, ref: mngr}},
+		{"pyclass", Token{Sign: "pyclass", cmd: false, ref: mngr}},
+		{"pyfunc ", Token{Sign: "pyfunc", cmd: false, ref: mngr}},
+		{"  gfunc  ", Token{Sign: "gfunc", cmd: false, ref: mngr}},
 	}
 	i := NewInterpreter()
 	for _, param := range tab {
@@ -79,5 +79,31 @@ func TestTokenTellsIfItsReload(t *testing.T) {
 		if has := cse.tkn.IsReload(); has != cse.want {
 			t.Errorf("has: %v; want: %v", has, cse.want)
 		}
+	}
+}
+
+func TestTokenTellsIfItsList(t *testing.T) {
+	tab := []struct {
+		tkn  Token
+		want bool
+	}{
+		{Token{"@LIST", true, 1}, true},
+		{Token{"@RELOAD", true, 0}, false},
+		{Token{"pprog", false, 1}, false},
+	}
+	for _, cse := range tab {
+		if has := cse.tkn.IsList(); has != cse.want {
+			t.Errorf("has: %v; want: %v", has, cse.want)
+		}
+	}
+}
+
+func TestEmptyStringIsUnbound(t *testing.T) {
+	input := ""
+	want := true
+	interp := NewInterpreter()
+	tkn := interp.Eval(input)
+	if has := tkn.IsUnbound(); has != want {
+		t.Errorf("has: %v; want: %v", has, want)
 	}
 }

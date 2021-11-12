@@ -57,7 +57,10 @@ endsnip`),
 }
 
 func TestParsing(t *testing.T) {
-	snips := snippets.NewSnippetsMap()
+	snips, err := snippets.NewSnippetsContainer("map")
+	if err != nil {
+		t.Error("failed to create snippet container")
+	}
 	snips.Insert(funcSnip)
 	snips.Insert(structSnip)
 	for _, r := range properReaders {
@@ -140,54 +143,5 @@ func TestTakeBetweenFails(t *testing.T) {
 		if ok {
 			t.Errorf("Input :: %s :: should error out", i.text)
 		}
-	}
-}
-
-func TestTestReplaceOutput(t *testing.T) {
-	inputs := []struct {
-		text, want string
-		repls      []string
-	}{
-		{
-			"${1:foo} ${2:bar} ${3:baz}",
-			"foo bar baz",
-			[]string{"foo", "bar", "baz"},
-		},
-	}
-	pat := `\${[0-9]+:\w*}`
-	for _, i := range inputs {
-		has, ok := Replace(i.text, pat, i.repls...)
-		if !ok {
-			t.Errorf("Failed to compile regex pattern: " + pat)
-		}
-		if has != i.want {
-			t.Errorf("String '%s' should look like '%s'", has, i.want)
-		}
-	}
-}
-
-func TestCheckIfIsCommand(t *testing.T) {
-	inputs := []struct {
-		cmd      string
-		expected bool
-	}{
-		{"@LIST", true},
-		{"@PRUNE", false},
-		{"", false},
-	}
-	for _, i := range inputs {
-		ok := IsCommand(i.cmd)
-		if ok != i.expected {
-			t.Errorf("command string was misidentified: %s", i.cmd)
-		}
-	}
-}
-
-func TestParsingFailsOnCmd(t *testing.T) {
-	line := "startsnip @LIST \"Signature of a command to fail\""
-	sm := newStateMachine()
-	state, line := sm.readSignature(line)
-	if state != ERROR {
-		t.Errorf("error was not raised on line: %s", line)
 	}
 }

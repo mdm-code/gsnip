@@ -26,6 +26,23 @@ type SnippetsMap struct {
 	sync.Mutex
 }
 
+// Create a fresh instance of snippets container.
+//
+// Allowed types (t): map
+func NewSnippetsContainer(t string) (Container, error) {
+	/*
+		NOTE: At some point, I might want to add case "db" with:
+			dns := "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
+			return NewSnippetsDB("postgres", dns)
+	*/
+	switch t {
+	case "map":
+		return NewSnippetsMap(), nil
+	default:
+		return nil, fmt.Errorf("container type (%s) is not implemented", t)
+	}
+}
+
 func NewSnippetsMap() *SnippetsMap {
 	return &SnippetsMap{
 		cntr: make(map[string]Snippet),

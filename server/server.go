@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/mdm-code/gsnip/manager"
+	"github.com/mdm-code/gsnip/signals"
 )
 
 type Logger interface {
@@ -39,12 +40,13 @@ type Server interface {
 }
 
 type UDPServer struct {
-	addr  net.UDPAddr
-	conn  *net.UDPConn
-	mngr  *manager.Manager
-	sigs  chan os.Signal
-	logr  Logger
-	fname string
+	addr   net.UDPAddr
+	conn   *net.UDPConn
+	mngr   *manager.Manager
+	sigs   chan os.Signal
+	logr   Logger
+	interp signals.Interpreter
+	fname  string
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -70,10 +72,11 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 			IP:   net.ParseIP(addr),
 			Port: port,
 		},
-		mngr:  m,
-		sigs:  make(chan os.Signal, 1),
-		logr:  NewLogger(),
-		fname: fname,
+		mngr:   m,
+		sigs:   make(chan os.Signal, 1),
+		logr:   NewLogger(),
+		interp: signals.NewInterpreter(),
+		fname:  fname,
 	}, nil
 }
 
@@ -120,9 +123,9 @@ func (s *UDPServer) AwaitConn() {
 }
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	inMsg := string(buff)
-	switch inMsg {
-	case "reload":
+	token := s.interp.Eval(string(buff))
+	switch token.IsReload() {
+	case true:
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {
@@ -131,7 +134,7 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		}
 		return
 	default:
-		resp, err := s.mngr.Execute(inMsg)
+		resp, err := s.mngr.Execute(token)
 		if err != nil {
 			s.logr.Log("ERROR", err)
 			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)

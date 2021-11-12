@@ -3,9 +3,9 @@ package manager
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/mdm-code/gsnip/parsing"
+	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
 )
 
@@ -29,7 +29,7 @@ func NewManager(fname string) (*Manager, error) {
 	return newManager(snpts), nil
 }
 
-func newManager(snpts *snippets.SnippetsMap) *Manager {
+func newManager(snpts snippets.Container) *Manager {
 	return &Manager{c: snpts}
 }
 
@@ -40,40 +40,26 @@ At this moment, it is possible to perform two actions:
 1. List out all snippets stored in a container
 2. Retrieve the body of a searched snippet with optional replacements
 */
-func (m *Manager) Execute(params ...string) (string, error) {
-	var result string
-	if len(params) == 0 {
-		return "", fmt.Errorf("there is nothing to find")
+func (m *Manager) Execute(token signals.Token) (string, error) {
+	if token.IsUnbound() {
+		return "", fmt.Errorf("empty strings are unbound")
 	}
-	cmd := strings.ToLower(params[0])
-	if parsing.IsCommand(cmd) {
-		if strings.ToLower(cmd) == "list" {
-			result := ""
-			listing, err := m.c.List()
-			if err != nil {
-				return "", fmt.Errorf("failed to list snippets")
-			}
-			for _, s := range listing {
-				result = result + s + "\n"
-			}
-			return result, nil
+	switch token.IsList() {
+	case true:
+		result := ""
+		listing, err := m.c.List()
+		if err != nil {
+			return "", fmt.Errorf("failed to list snippets")
 		}
-		return "", fmt.Errorf("unimplemented command")
-	} else {
-		if searched, err := m.c.Find(cmd); err != nil {
-			return "", fmt.Errorf("%s was not found", cmd)
+		for _, s := range listing {
+			result = result + s + "\n"
+		}
+		return result, nil
+	default:
+		if searched, err := m.c.Find(token.Sign); err != nil {
+			return "", fmt.Errorf("%s was not found", token.Sign)
 		} else {
-			pat := `\${[0-9]+:\w*}`
-			var repls []string
-			if len(params) > 1 {
-				repls = params[1:]
-			}
-			var ok bool
-			result, ok = parsing.Replace(searched.Body, pat, repls...)
-			if !ok {
-				return "", fmt.Errorf("failed to compile regex pattern: %s", pat)
-			}
-			return result, nil
+			return searched.Body, nil
 		}
 	}
 }

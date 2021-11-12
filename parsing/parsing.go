@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	"github.com/mdm-code/gsnip/snippets"
@@ -16,10 +15,6 @@ const (
 	SCANBODY
 	ERROR
 )
-
-var cmds = []string{
-	"list",
-}
 
 type State uint8
 
@@ -55,11 +50,14 @@ func NewParser() Parser {
 
 // Parse file with snippets. The result is a map
 // of of snippets with name as key and body as value.
-func (p *Parser) Parse(i io.Reader) (*snippets.SnippetsMap, error) {
-	smap := snippets.NewSnippetsMap()
+func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
+	smap, err := snippets.NewSnippetsContainer("map")
+	if err != nil {
+		return nil, err
+	}
 	parsed, err := p.sm.run(i)
 	if err != nil {
-		return smap, err
+		return nil, err
 	}
 	for _, s := range parsed {
 		smap.Insert(s)
@@ -77,9 +75,6 @@ func (sm *StateMachine) scanLine(line string) (State, string) {
 func (sm *StateMachine) readSignature(line string) (State, string) {
 	elems, ok := splitSignature(line)
 	if !ok {
-		return ERROR, line
-	}
-	if IsCommand(strings.ToLower(elems[0])) {
 		return ERROR, line
 	}
 	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}
@@ -147,30 +142,4 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 		sm.state, line = callable(sm, line)
 	}
 	return sm.parsed, nil
-}
-
-// Replace attempts to substitute placeholders with strings.
-func Replace(str string, pat string, repls ...string) (string, bool) {
-	re, err := regexp.Compile(pat)
-	if err != nil {
-		return str, false
-	}
-	for _, r := range repls {
-		sms := re.FindStringSubmatch(str)
-		if len(sms) == 0 {
-			break
-		}
-		sm := sms[0]
-		str = strings.Replace(str, sm, r, 1)
-	}
-	return str, true
-}
-
-func IsCommand(s string) bool {
-	for _, cmd := range cmds {
-		if s == cmd {
-			return true
-		}
-	}
-	return false
 }

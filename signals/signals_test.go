@@ -13,7 +13,7 @@ func TestEvalCommand(t *testing.T) {
 	}
 	i := NewInterpreter()
 	for _, param := range tab {
-		has, _ := i.Eval(param.in)
+		has := i.Eval(param.in)
 		if has != param.want {
 			t.Errorf("has: %v; want %v", has, param.want)
 		}
@@ -32,7 +32,7 @@ func TestEvalToken(t *testing.T) {
 	}
 	i := NewInterpreter()
 	for _, param := range tab {
-		has, _ := i.Eval(param.in)
+		has := i.Eval(param.in)
 		if has != param.want {
 			t.Errorf("has %v; want %v", has, param.want)
 		}
@@ -59,12 +59,25 @@ func TestTokenTellsIfItsCommand(t *testing.T) {
 	}
 	for _, c := range tab {
 		interp := NewInterpreter()
-		has, err := interp.Eval(c.clientSig)
-		if err != nil {
-			t.Error(err)
-		}
+		has := interp.Eval(c.clientSig)
 		if out := has.IsCmd(); out != c.want {
 			t.Errorf("has: %v; want: %v", out, c.want)
+		}
+	}
+}
+
+func TestTokenTellsIfItsReload(t *testing.T) {
+	tab := []struct {
+		tkn  Token
+		want bool
+	}{
+		{Token{"@RELOAD", true, 0}, true},
+		{Token{"@LIST", true, 1}, false},
+		{Token{"pprog", false, 1}, false},
+	}
+	for _, cse := range tab {
+		if has := cse.tkn.IsReload(); has != cse.want {
+			t.Errorf("has: %v; want: %v", has, cse.want)
 		}
 	}
 }

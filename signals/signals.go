@@ -19,6 +19,10 @@ func (t Token) IsCmd() bool {
 	return t.cmd
 }
 
+func (t Token) IsReload() bool {
+	return t.sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
+}
+
 var cmds = []Token{
 	{
 		sign: "@LIST",
@@ -43,12 +47,12 @@ func NewInterpreter() Interpreter {
 	}
 }
 
-func (i Interpreter) Eval(s string) (Token, error) {
+func (i Interpreter) Eval(s string) Token {
 	s = strings.TrimSpace(s)
 	for _, c := range i.cmds {
 		if s == c.sign {
-			return c, nil
+			return c
 		}
 	}
-	return Token{sign: s, cmd: false, ref: mngr}, nil
+	return Token{sign: s, cmd: false, ref: mngr}
 }

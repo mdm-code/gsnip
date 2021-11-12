@@ -38,3 +38,33 @@ func TestEvalToken(t *testing.T) {
 		}
 	}
 }
+
+func TestTokenTellsIfItsCommand(t *testing.T) {
+	tab := []struct {
+		clientSig string
+		want      bool
+	}{
+		{
+			"@RELOAD",
+			true,
+		},
+		{
+			"@LIST",
+			true,
+		},
+		{
+			"pprog",
+			false,
+		},
+	}
+	for _, c := range tab {
+		interp := NewInterpreter()
+		has, err := interp.Eval(c.clientSig)
+		if err != nil {
+			t.Error(err)
+		}
+		if out := has.IsCmd(); out != c.want {
+			t.Errorf("has: %v; want: %v", out, c.want)
+		}
+	}
+}

@@ -15,6 +15,10 @@ type Token struct {
 	ref  dep
 }
 
+func (t Token) IsCmd() bool {
+	return t.cmd
+}
+
 var cmds = []Token{
 	{
 		sign: "@LIST",
@@ -33,6 +37,12 @@ type Interpreter struct {
 	cmds []Token
 }
 
+func NewInterpreter() Interpreter {
+	return Interpreter{
+		cmds: cmds,
+	}
+}
+
 func (i Interpreter) Eval(s string) (Token, error) {
 	s = strings.TrimSpace(s)
 	for _, c := range i.cmds {
@@ -41,10 +51,4 @@ func (i Interpreter) Eval(s string) (Token, error) {
 		}
 	}
 	return Token{sign: s, cmd: false, ref: mngr}, nil
-}
-
-func NewInterpreter() Interpreter {
-	return Interpreter{
-		cmds: cmds,
-	}
 }

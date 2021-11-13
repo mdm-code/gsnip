@@ -56,8 +56,8 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 		}
 		return result, nil
 	default:
-		if searched, err := m.c.Find(token.Sign); err != nil {
-			return "", fmt.Errorf("%s was not found", token.Sign)
+		if searched, err := m.c.Find(token.Contents()); err != nil {
+			return "", fmt.Errorf("%s was not found", token.Contents())
 		} else {
 			return searched.Body, nil
 		}

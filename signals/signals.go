@@ -13,9 +13,13 @@ const (
 )
 
 type Token struct {
-	Sign string
+	sign string
 	cmd  bool
 	ref  dep
+}
+
+func (t Token) Contents() string {
+	return t.sign
 }
 
 func (t Token) IsCmd() bool {
@@ -23,11 +27,11 @@ func (t Token) IsCmd() bool {
 }
 
 func (t Token) IsReload() bool {
-	return t.Sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
+	return t.sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
 }
 
 func (t Token) IsList() bool {
-	return t.Sign == "@LIST" && t.IsCmd() && t.ref == mngr
+	return t.sign == "@LIST" && t.IsCmd() && t.ref == mngr
 }
 
 func (t Token) IsUnbound() bool {
@@ -39,12 +43,12 @@ func (t Token) IsUnbound() bool {
 
 var cmds = []Token{
 	{
-		Sign: "@LIST",
+		sign: "@LIST",
 		cmd:  true,
 		ref:  mngr,
 	},
 	{
-		Sign: "@RELOAD",
+		sign: "@RELOAD",
 		cmd:  true,
 		ref:  srvr,
 	},
@@ -64,12 +68,12 @@ func NewInterpreter() Interpreter {
 func (i Interpreter) Eval(s string) Token {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return Token{Sign: "", cmd: false, ref: unbound}
+		return Token{sign: "", cmd: false, ref: unbound}
 	}
 	for _, c := range i.cmds {
-		if s == c.Sign {
+		if s == c.sign {
 			return c
 		}
 	}
-	return Token{Sign: s, cmd: false, ref: mngr}
+	return Token{sign: s, cmd: false, ref: mngr}
 }

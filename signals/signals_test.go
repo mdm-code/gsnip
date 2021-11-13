@@ -26,9 +26,9 @@ func TestEvalToken(t *testing.T) {
 		in   string
 		want Token
 	}{
-		{"pyclass", Token{Sign: "pyclass", cmd: false, ref: mngr}},
-		{"pyfunc ", Token{Sign: "pyfunc", cmd: false, ref: mngr}},
-		{"  gfunc  ", Token{Sign: "gfunc", cmd: false, ref: mngr}},
+		{"pyclass", Token{sign: "pyclass", cmd: false, ref: mngr}},
+		{"pyfunc ", Token{sign: "pyfunc", cmd: false, ref: mngr}},
+		{"  gfunc  ", Token{sign: "gfunc", cmd: false, ref: mngr}},
 	}
 	i := NewInterpreter()
 	for _, param := range tab {

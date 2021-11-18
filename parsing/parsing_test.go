@@ -99,6 +99,7 @@ func TestSignatureSplitFails(t *testing.T) {
 func TestSignatureSplitPasses(t *testing.T) {
 	inputs := []string{
 		"startsnip struct \"Go struct snippet\"",
+		"	  startsnip struct \"sample comment\"   ", // whitespace on both sides
 		"startsnip func() \"\"", // Empty comment
 	}
 	for _, i := range inputs {

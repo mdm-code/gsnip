@@ -3,6 +3,7 @@ package manager
 import (
 	"testing"
 
+	"github.com/mdm-code/gsnip/access"
 	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
 )
@@ -16,7 +17,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 		Body: "body",
 	}
 	c.Insert(s)
-	m := newManager(c)
+	m := newManager(&access.FileHandler{}, c)
 	input := "func"
 	interp := signals.NewInterpreter()
 	tkn := interp.Eval(input)
@@ -42,7 +43,7 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 		Desc: "class method",
 		Body: "body",
 	})
-	m := newManager(c)
+	m := newManager(&access.FileHandler{}, c)
 	interp := signals.NewInterpreter()
 	tkn := interp.Eval("@LIST")
 	has, err := m.Execute(tkn)
@@ -67,7 +68,7 @@ func TestUnrecognizedInputFails(t *testing.T) {
 	if err != nil {
 		t.Error("failed to create snippet container")
 	}
-	m := newManager(snips)
+	m := newManager(&access.FileHandler{}, snips)
 	interp := signals.NewInterpreter()
 	tkn := interp.Eval("search")
 	_, err = m.Execute(tkn)

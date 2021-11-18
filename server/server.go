@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mdm-code/gsnip/access"
 	"github.com/mdm-code/gsnip/manager"
 	"github.com/mdm-code/gsnip/signals"
 )
@@ -46,7 +47,7 @@ type UDPServer struct {
 	sigs   chan os.Signal
 	logr   Logger
 	interp signals.Interpreter
-	fname  string
+	fh     *access.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -63,7 +64,11 @@ func NewServer(ntwrk string, addr string, port int, fname string) (Server, error
 }
 
 func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
-	m, err := manager.NewManager(fname)
+	fh, err := access.NewFileHandler(fname)
+	if err != nil {
+		return nil, err
+	}
+	m, err := manager.NewManager(fh)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +81,7 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 		sigs:   make(chan os.Signal, 1),
 		logr:   NewLogger(),
 		interp: signals.NewInterpreter(),
-		fname:  fname,
+		fh:     fh,
 	}, nil
 }
 
@@ -87,6 +92,7 @@ func (s *UDPServer) Listen() (err error) {
 }
 
 func (s *UDPServer) ShutDown() {
+	s.fh.Close() // NOTE: file handler closes down the moment the server is closed
 	s.conn.Close()
 }
 
@@ -96,12 +102,11 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 		for {
 			select {
 			case <-s.sigs:
-				m, err := manager.NewManager(s.fname)
+				err := s.mngr.Reload()
 				if err != nil {
-					s.logr.Log("ERROR", "failed to reload source file")
+					s.logr.Log("ERROR", err)
 					continue
 				}
-				s.mngr = m
 				s.logr.Log("INFO", "reloaded snippet source file")
 			}
 		}

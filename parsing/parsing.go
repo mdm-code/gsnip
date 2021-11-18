@@ -66,7 +66,7 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 }
 
 func (sm *StateMachine) scanLine(line string) (State, string) {
-	if strings.HasPrefix(line, "startsnip") {
+	if l := strings.TrimSpace(line); strings.HasPrefix(l, "startsnip") {
 		return SIGNATURE, line
 	}
 	return SCANNING, ""
@@ -116,7 +116,7 @@ func takeBetween(s string, delim rune) (string, bool) {
 }
 
 func (sm *StateMachine) scanBody(line string) (State, string) {
-	if strings.HasPrefix(line, "endsnip") {
+	if l := strings.TrimSpace(line); strings.HasPrefix(l, "endsnip") {
 		sm.parsed[len(sm.parsed)-1].Body = strings.Join(sm.body, "\n")
 		sm.body = sm.body[:0]
 		return SCANNING, ""

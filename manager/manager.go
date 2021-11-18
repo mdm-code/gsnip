@@ -2,35 +2,29 @@ package manager
 
 import (
 	"fmt"
-	"os"
 
+	"github.com/mdm-code/gsnip/access"
 	"github.com/mdm-code/gsnip/parsing"
 	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
 )
 
 type Manager struct {
-	c snippets.Container
+	fh *access.FileHandler
+	c  snippets.Container
 }
 
-func NewManager(fname string) (*Manager, error) {
-	f, err := os.Open(fname)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "gsnipd ERROR: %s", err)
-		os.Exit(1)
-	}
-	defer f.Close()
-
+func NewManager(fh *access.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
-	snpts, err := parser.Parse(f)
+	snpts, err := parser.Parse(fh)
 	if err != nil {
-		return newManager(nil), err
+		return newManager(nil, nil), err
 	}
-	return newManager(snpts), nil
+	return newManager(fh, snpts), nil
 }
 
-func newManager(snpts snippets.Container) *Manager {
-	return &Manager{c: snpts}
+func newManager(fh *access.FileHandler, snpts snippets.Container) *Manager {
+	return &Manager{fh, snpts}
 }
 
 /* Execute a command on the snippet container.
@@ -62,4 +56,19 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 			return searched.Body, nil
 		}
 	}
+}
+
+// Reload all snippets from the source file.
+func (m *Manager) Reload() error {
+	_, err := m.fh.Reload()
+	if err != nil {
+		return err
+	}
+	parser := parsing.NewParser()
+	snpts, err := parser.Parse(m.fh)
+	if err != nil {
+		return err
+	}
+	m.c = snpts
+	return nil
 }

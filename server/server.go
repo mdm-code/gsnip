@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mdm-code/gsnip/access"
+	"github.com/mdm-code/gsnip/fs"
 	"github.com/mdm-code/gsnip/manager"
 	"github.com/mdm-code/gsnip/signals"
 )
@@ -47,7 +47,7 @@ type UDPServer struct {
 	sigs   chan os.Signal
 	logr   Logger
 	interp signals.Interpreter
-	fh     *access.FileHandler
+	fh     *fs.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -64,7 +64,7 @@ func NewServer(ntwrk string, addr string, port int, fname string) (Server, error
 }
 
 func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
-	fh, err := access.NewFileHandler(fname)
+	fh, err := fs.NewFileHandler(fname, fs.Perm)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,8 @@ func (s *UDPServer) Listen() (err error) {
 }
 
 func (s *UDPServer) ShutDown() {
-	s.fh.Close() // NOTE: file handler closes down the moment the server is closed
+	// NOTE: file handler closes down the moment the server is closed
+	s.fh.Close()
 	s.conn.Close()
 }
 

@@ -1,4 +1,4 @@
-package access
+package fs
 
 import (
 	"os"
@@ -24,9 +24,25 @@ func (m mockFile) Write(p []byte) (int, error) {
 
 func (m mockFile) Close() error { return nil }
 
+type mockOpener struct {
+	fname string
+}
+
+func (m *mockOpener) open() (*os.File, error) {
+	return nil, nil
+}
+
+func (m *mockOpener) name() string {
+	return "mockName"
+}
+
 func TestFileHandlerInteraction(t *testing.T) {
 	dst := []byte{}
-	fh := &FileHandler{&mockFile{}, &sync.Mutex{}}
+	fh := &FileHandler{
+		&mockFile{},
+		&sync.Mutex{},
+		&mockOpener{},
+	}
 	fh.Reload()
 	fh.Read(dst)
 	fh.Write(dst)

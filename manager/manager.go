@@ -3,18 +3,18 @@ package manager
 import (
 	"fmt"
 
-	"github.com/mdm-code/gsnip/access"
+	"github.com/mdm-code/gsnip/fs"
 	"github.com/mdm-code/gsnip/parsing"
 	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
 )
 
 type Manager struct {
-	fh *access.FileHandler
+	fh *fs.FileHandler
 	c  snippets.Container
 }
 
-func NewManager(fh *access.FileHandler) (*Manager, error) {
+func NewManager(fh *fs.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(fh)
 	if err != nil {
@@ -23,7 +23,7 @@ func NewManager(fh *access.FileHandler) (*Manager, error) {
 	return newManager(fh, snpts), nil
 }
 
-func newManager(fh *access.FileHandler, snpts snippets.Container) *Manager {
+func newManager(fh *fs.FileHandler, snpts snippets.Container) *Manager {
 	return &Manager{fh, snpts}
 }
 
@@ -60,7 +60,7 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 
 // Reload all snippets from the source file.
 func (m *Manager) Reload() error {
-	_, err := m.fh.Reload()
+	err := m.fh.Reload()
 	if err != nil {
 		return err
 	}

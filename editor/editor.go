@@ -13,8 +13,21 @@ type editor struct {
 	program string
 }
 
-func NewEditor(prog, fname string) (*editor, error) {
-	fh, err := fs.NewFileHandler(fname, fs.Temp)
+// NewEditor is used to create a new text editor that is capable of editing the
+// underlying text file.
+//
+// The function takes the prog argument, which can be `vim` or `nano`, for instance.
+// The second argument, fname, is a pointer to a string. A non-empty string would
+// mean that a permanent file will be created. A nil pointer would mean that a
+// temporary file will be created.
+func NewEditor(prog string, fname *string) (*editor, error) {
+	var fh *fs.FileHandler
+	var err error
+	if fname == nil {
+		fh, err = fs.NewFileHandler("", fs.Temp)
+	} else {
+		fh, err = fs.NewFileHandler(*fname, fs.Perm)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +40,7 @@ func (e *editor) Run() ([]byte, error) {
 	cmd := exec.Command(e.program, e.handler.Name())
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		return nil, err

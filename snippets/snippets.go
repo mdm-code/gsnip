@@ -13,8 +13,12 @@ type Container interface {
 	Insert(Snippet) error
 	Find(string) (Snippet, error)
 	List() ([]string, error)
+	// TODO: Container can return a list of snippets
+	// TODO: Container can delete a snippet based off its Name
 }
 
+// TODO: Snippet is able to return its in-file text representation
+// s.Repr()?
 type Snippet struct {
 	Name string
 	Desc string

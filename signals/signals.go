@@ -12,6 +12,16 @@ const (
 	unbound
 )
 
+/* TODO: Token should have the BODY FIELD for insert and delete
+
+Command sign (kind) type
+	@LST
+	@RLD
+	@INS
+	@FND
+	@DEL
+Body would keep the reminder of the received message
+*/
 type Token struct {
 	sign string
 	cmd  bool
@@ -65,6 +75,8 @@ func NewInterpreter() Interpreter {
 	}
 }
 
+// TODO: Eval Message reads first 4 bytes to interpret the kind
+// The rest is passed to the body
 func (i Interpreter) Eval(s string) Token {
 	s = strings.TrimSpace(s)
 	if s == "" {

@@ -38,6 +38,8 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 	if token.IsUnbound() {
 		return "", fmt.Errorf("empty strings are unbound")
 	}
+	// TODO: Switch for manager token kind (@LST, @DEL...)
+	// Make each one a separate function called from within the switch statement
 	switch token.IsList() {
 	case true:
 		result := ""
@@ -57,6 +59,11 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 		}
 	}
 }
+
+/* TODO: Write up the insert function
+It should attempt inserting a snippet to the snpts container.
+There exists an appropriate method on the snippet container.
+*/
 
 // Reload all snippets from the source file.
 func (m *Manager) Reload() error {

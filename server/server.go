@@ -117,6 +117,7 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 // Await for incoming connections. This is a blocking function.
 func (s *UDPServer) AwaitConn() {
 	for {
+		// TODO: Change the buffer size to 2048
 		buff := make([]byte, 512)
 		length, respAddr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {

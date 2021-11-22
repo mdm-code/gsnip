@@ -60,6 +60,14 @@ func (o *openTemp) open() (f *os.File, err error) {
 
 func (o *openTemp) name() string { return o.fname }
 
+// TODO: File handler should be able to truncate the file and receive
+// fresh contents from the snippet container. Then truncate the underlying
+// file and write fresh snippets.
+/*
+type Trucator interface {
+	trunc() error
+}
+*/
 type FileHandler struct {
 	file  ReadWriteSeekCloser
 	mutex *sync.Mutex

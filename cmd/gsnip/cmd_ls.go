@@ -10,14 +10,14 @@ func init() {
 		cmd{
 			name:    "list",
 			fn:      cmdLs,
-			descr:   "gsnip\tlist\tlist all snippets",
+			desc:    "gsnip\tlist\tlist all snippets",
 			aliases: []string{"ls"},
 		},
 	)
 }
 
 func cmdLs(c net.Conn, args []string) error {
-	fs := flag.NewFlagSet("ls", flag.ContinueOnError)
+	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
 		return err

@@ -12,7 +12,7 @@ func init() {
 		cmd{
 			name:    "find",
 			fn:      cmdFind,
-			descr:   "gsnip\tfind\tfind specific snippet",
+			desc:    "gsnip\tfind\tfind specific snippet",
 			aliases: []string{"f"},
 		},
 	)

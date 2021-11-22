@@ -17,7 +17,7 @@ var (
 type cmd struct {
 	name    string
 	fn      func(net.Conn, []string) error
-	descr   string
+	desc    string
 	aliases []string
 }
 
@@ -50,29 +50,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
 	}
-
-	// buf := make([]byte, 2048)
-	// for _, p := range params {
-	// 	// TODO: Integrate insert into server cmds
-	// 	if p == "@INSERT" {
-	// 		err := insert()
-	// 		if err != nil {
-	// 			fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
-	// 		}
-	// 		continue
-	// 	}
-	// 	_, err = fmt.Fprintf(conn, p)
-	// 	if err != nil {
-	// 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
-	// 	}
-	// 	n, err := bufio.NewReader(conn).Read(buf)
-	// 	if err != nil {
-	// 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
-	// 		continue
-
-	// 	}
-	// 	fmt.Fprintf(os.Stdout, "%s\n", buf[:n])
-	// }
 }
 
 func parseArgs() ([]string, error) {
@@ -85,7 +62,7 @@ func parseArgs() ([]string, error) {
 		fs.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nCommands:\n")
 		for _, c := range cmdList {
-			fmt.Fprintf(os.Stderr, c.descr+"\n")
+			fmt.Fprintf(os.Stderr, c.desc+"\n")
 		}
 	}
 
@@ -129,17 +106,3 @@ func isPiped() bool {
 	fi, _ := os.Stdin.Stat()
 	return (fi.Mode() & os.ModeCharDevice) == 0
 }
-
-// func insert() error {
-// 	e, err := editor.NewEditor("nvim", nil)
-// 	defer e.Exit()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	data, err := e.Run()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	fmt.Println(string(data))
-// 	return nil
-// }

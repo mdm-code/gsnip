@@ -1,8 +1,6 @@
 package signals
 
-import (
-	"strings"
-)
+import "bytes"
 
 type dep int8
 
@@ -77,15 +75,16 @@ func NewInterpreter() Interpreter {
 
 // TODO: Eval Message reads first 4 bytes to interpret the kind
 // The rest is passed to the body
-func (i Interpreter) Eval(s string) Token {
-	s = strings.TrimSpace(s)
-	if s == "" {
+func (i Interpreter) Eval(b []byte) Token {
+	// NOTE: This is where the fun begins
+	b = bytes.TrimSpace(b)
+	if len(b) <= 0 {
 		return Token{sign: "", cmd: false, ref: unbound}
 	}
 	for _, c := range i.cmds {
-		if s == c.sign {
+		if string(b) == c.sign {
 			return c
 		}
 	}
-	return Token{sign: s, cmd: false, ref: mngr}
+	return Token{sign: string(b), cmd: false, ref: mngr}
 }

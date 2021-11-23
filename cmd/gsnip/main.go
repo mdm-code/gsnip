@@ -89,7 +89,7 @@ func dispatchCmd(c net.Conn, args []string) error {
 }
 
 func transact(c net.Conn, data string) error {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 4096)
 	_, err := fmt.Fprintf(conn, data)
 	if err != nil {
 		return err

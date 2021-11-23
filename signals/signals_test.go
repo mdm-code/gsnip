@@ -13,7 +13,7 @@ func TestEvalCommand(t *testing.T) {
 	}
 	i := NewInterpreter()
 	for _, param := range tab {
-		has := i.Eval(param.in)
+		has := i.Eval([]byte(param.in))
 		if has != param.want {
 			t.Errorf("has: %v; want %v", has, param.want)
 		}
@@ -32,7 +32,7 @@ func TestEvalToken(t *testing.T) {
 	}
 	i := NewInterpreter()
 	for _, param := range tab {
-		has := i.Eval(param.in)
+		has := i.Eval([]byte(param.in))
 		if has != param.want {
 			t.Errorf("has %v; want %v", has, param.want)
 		}
@@ -59,7 +59,7 @@ func TestTokenTellsIfItsCommand(t *testing.T) {
 	}
 	for _, c := range tab {
 		interp := NewInterpreter()
-		has := interp.Eval(c.clientSig)
+		has := interp.Eval([]byte(c.clientSig))
 		if out := has.IsCmd(); out != c.want {
 			t.Errorf("has: %v; want: %v", out, c.want)
 		}
@@ -102,7 +102,7 @@ func TestEmptyStringIsUnbound(t *testing.T) {
 	input := ""
 	want := true
 	interp := NewInterpreter()
-	tkn := interp.Eval(input)
+	tkn := interp.Eval([]byte(input))
 	if has := tkn.IsUnbound(); has != want {
 		t.Errorf("has: %v; want: %v", has, want)
 	}

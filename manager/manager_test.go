@@ -20,7 +20,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 	m := newManager(&fs.FileHandler{}, c)
 	input := "func"
 	interp := signals.NewInterpreter()
-	tkn := interp.Eval(input)
+	tkn := interp.Eval([]byte(input))
 	has, err := m.Execute(tkn)
 	want, _ := c.Find("func")
 	if err != nil || has != want.Body {
@@ -45,7 +45,8 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 	})
 	m := newManager(&fs.FileHandler{}, c)
 	interp := signals.NewInterpreter()
-	tkn := interp.Eval("@LIST")
+	msg := "@LIST"
+	tkn := interp.Eval([]byte(msg))
 	has, err := m.Execute(tkn)
 	var want string
 	listing, err := c.List()
@@ -70,7 +71,8 @@ func TestUnrecognizedInputFails(t *testing.T) {
 	}
 	m := newManager(&fs.FileHandler{}, snips)
 	interp := signals.NewInterpreter()
-	tkn := interp.Eval("search")
+	msg := "search"
+	tkn := interp.Eval([]byte(msg))
 	_, err = m.Execute(tkn)
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")

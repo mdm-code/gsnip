@@ -1,45 +1,67 @@
 package signals
 
-import "bytes"
+import (
+	"bytes"
+)
 
 type dep int8
 
 const (
-	srvr dep = iota
+	unbound dep = iota
+	srvr
 	mngr
-	unbound
 )
 
-/* TODO: Token should have the BODY FIELD for insert and delete
+type kind int8
 
-Command sign (kind) type
-	@LST
-	@RLD
-	@INS
-	@FND
-	@DEL
-Body would keep the reminder of the received message
-*/
+const (
+	undef kind = iota
+	fnd
+	lst
+	ins
+	del
+	rld
+)
+
+var kindToStr = map[kind]string{
+	fnd: "@FND",
+	lst: "@LST",
+	ins: "@INS",
+	del: "@DEL",
+	rld: "@RLD",
+}
+
+var strToKind = map[string]kind{
+	"@FND": fnd,
+	"@LST": lst,
+	"@INS": ins,
+	"@DEL": del,
+	"@RLD": rld,
+}
+
+const hSize = 5
+
 type Token struct {
-	sign string
+	knd  kind
 	cmd  bool
 	ref  dep
+	body []byte
 }
 
-func (t Token) Contents() string {
-	return t.sign
+func (t Token) T() kind {
+	return t.knd
 }
 
-func (t Token) IsCmd() bool {
-	return t.cmd
+func (t Token) TString() string {
+	return kindToStr[t.knd]
 }
 
-func (t Token) IsReload() bool {
-	return t.sign == "@RELOAD" && t.IsCmd() && t.ref == srvr
+func (t Token) TByte() []byte {
+	return []byte(t.TString())
 }
 
-func (t Token) IsList() bool {
-	return t.sign == "@LIST" && t.IsCmd() && t.ref == mngr
+func (t Token) Contents() []byte {
+	return t.body
 }
 
 func (t Token) IsUnbound() bool {
@@ -49,42 +71,30 @@ func (t Token) IsUnbound() bool {
 	return false
 }
 
-var cmds = []Token{
-	{
-		sign: "@LIST",
-		cmd:  true,
-		ref:  mngr,
-	},
-	{
-		sign: "@RELOAD",
-		cmd:  true,
-		ref:  srvr,
-	},
-}
-
-// Handles signal evaluation.
 type Interpreter struct {
-	cmds []Token
+	kmap map[string]kind
 }
 
 func NewInterpreter() Interpreter {
 	return Interpreter{
-		cmds: cmds,
+		kmap: strToKind,
 	}
 }
 
-// TODO: Eval Message reads first 4 bytes to interpret the kind
-// The rest is passed to the body
 func (i Interpreter) Eval(b []byte) Token {
-	// NOTE: This is where the fun begins
 	b = bytes.TrimSpace(b)
-	if len(b) <= 0 {
-		return Token{sign: "", cmd: false, ref: unbound}
+	header := b[:hSize]
+	header = header[:len(header)-1] // NOTE: Trailing 0 byte is removed
+	var body []byte
+	if len(b) > hSize {
+		body = b[hSize:]
 	}
-	for _, c := range i.cmds {
-		if string(b) == c.sign {
-			return c
-		}
+	switch k := i.kmap[string(header)]; k {
+	case lst, del, ins, fnd:
+		return Token{knd: k, cmd: true, ref: mngr, body: body}
+	case rld:
+		return Token{knd: k, cmd: true, ref: srvr, body: body}
+	default:
+		return Token{knd: undef, cmd: false, ref: unbound}
 	}
-	return Token{sign: string(b), cmd: false, ref: mngr}
 }

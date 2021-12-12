@@ -23,7 +23,7 @@ func cmdLs(c net.Conn, args []string) error {
 		return err
 	}
 	args = fs.Args()
-	err = transact(c, "@LIST")
+	err = transact(c, "@LST", "")
 	if err != nil {
 		return err
 	}

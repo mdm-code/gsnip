@@ -88,9 +88,9 @@ func dispatchCmd(c net.Conn, args []string) error {
 	return fmt.Errorf("command not found: %s", args[0])
 }
 
-func transact(c net.Conn, data string) error {
+func transact(c net.Conn, kind string, data string) error {
 	buf := make([]byte, 4096)
-	_, err := fmt.Fprintf(conn, data)
+	_, err := fmt.Fprintf(conn, kind+data)
 	if err != nil {
 		return err
 	}

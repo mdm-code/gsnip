@@ -36,7 +36,7 @@ func cmdFind(c net.Conn, args []string) error {
 		}
 	}
 	for _, p := range params {
-		err := transact(c, p)
+		err := transact(c, "@FND", p)
 		if err != nil {
 			return err
 		}

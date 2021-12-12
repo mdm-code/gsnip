@@ -23,7 +23,7 @@ func cmdReload(c net.Conn, args []string) error {
 		return err
 	}
 	args = fs.Args()
-	err = transact(c, "@RELOAD")
+	err = transact(c, "@RLD", "")
 	if err != nil {
 		return err
 	}

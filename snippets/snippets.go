@@ -13,16 +13,19 @@ type Container interface {
 	Insert(Snippet) error
 	Find(string) (Snippet, error)
 	List() ([]string, error)
-	// TODO: Container can return a list of snippets
-	// TODO: Container can delete a snippet based off its Name
+	Delete(string) error
+	ListObj() ([]Snippet, error)
 }
 
-// TODO: Snippet is able to return its in-file text representation
-// s.Repr()?
 type Snippet struct {
 	Name string
 	Desc string
 	Body string
+}
+
+// In-file snippet text representation.
+func (s Snippet) Repr() string {
+	return fmt.Sprintf(`startsnip %s "%s" %sendsnip`, s.Name, s.Desc, s.Body)
 }
 
 type SnippetsMap struct {
@@ -34,11 +37,6 @@ type SnippetsMap struct {
 //
 // Allowed types (t): map
 func NewSnippetsContainer(t string) (Container, error) {
-	/*
-		NOTE: At some point, I might want to add case "db" with:
-			dns := "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
-			return NewSnippetsDB("postgres", dns)
-	*/
 	switch t {
 	case "map":
 		return NewSnippetsMap(), nil
@@ -57,7 +55,10 @@ type SnippetsDB struct {
 	db *sql.DB
 }
 
-func NewSnippetsDB(dialect string, dsn string) (Container, error) {
+/*
+	NOTE: *SnippetsDB does not implement Container interface.
+*/
+func NewSnippetsDB(dialect string, dsn string) (*SnippetsDB, error) {
 	db, err := sql.Open(dialect, dsn)
 	if err != nil {
 		return nil, err
@@ -89,6 +90,7 @@ func (s *SnippetsMap) Find(str string) (Snippet, error) {
 
 func (s *SnippetsMap) List() ([]string, error) {
 	s.Lock()
+	defer s.Unlock()
 	var result []string
 	var str string
 	for _, v := range s.cntr {
@@ -96,8 +98,23 @@ func (s *SnippetsMap) List() ([]string, error) {
 		result = append(result, str)
 	}
 	sort.Strings(result)
-	s.Unlock()
 	return result, nil
+}
+
+func (s *SnippetsMap) Delete(key string) error {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.cntr, key)
+	return nil
+}
+
+func (s *SnippetsMap) ListObj() (result []Snippet, err error) {
+	s.Lock()
+	defer s.Unlock()
+	for _, v := range s.cntr {
+		result = append(result, v)
+	}
+	return
 }
 
 func (s *SnippetsDB) Insert(snip Snippet) error {

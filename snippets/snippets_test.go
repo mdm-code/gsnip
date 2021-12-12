@@ -2,11 +2,20 @@ package snippets
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
+
+func TestSnippetRepr(t *testing.T) {
+	s := Snippet{"func", "a function", "def func(): return None"}
+	want := fmt.Sprintf(`startsnip %s "%s" %sendsnip`, s.Name, s.Desc, s.Body)
+	if want != s.Repr() {
+		t.Errorf("want: %s; has %s", want, s.Repr())
+	}
+}
 
 func TestContainerFindMethod(t *testing.T) {
 	ss := NewSnippetsMap()
@@ -48,6 +57,20 @@ func TestSnippetsMapList(t *testing.T) {
 	want := []string{"func\tGo function", "map\tGo map", "struct\tGo struct"}
 	if has, err := ss.List(); !reflect.DeepEqual(has, want) || err != nil {
 		t.Errorf("want: %v; has: %v", want, has)
+	}
+}
+
+func TestSnippetsMapDelete(t *testing.T) {
+	sm := NewSnippetsMap()
+	sm.cntr = map[string]Snippet{
+		"func":   {"func", "Go function", "func() {}"},
+		"struct": {"struct", "Go struct", "type struct {}"},
+		"map":    {"map", "Go map", "map[string]string"},
+	}
+	toDel := "map"
+	sm.Delete(toDel)
+	if _, err := sm.Find(toDel); err == nil {
+		t.Errorf("snippet `%s` is still in map", toDel)
 	}
 }
 

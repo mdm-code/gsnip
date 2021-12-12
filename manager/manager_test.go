@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/mdm-code/gsnip/fs"
-	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
+	"github.com/mdm-code/gsnip/stream"
 )
 
 func TestProgramAcceptsFindCmd(t *testing.T) {
@@ -18,8 +18,8 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 	}
 	c.Insert(s)
 	m := newManager(&fs.FileHandler{}, c)
-	input := "func"
-	interp := signals.NewInterpreter()
+	input := "@FND func"
+	interp := stream.NewInterpreter()
 	tkn := interp.Eval([]byte(input))
 	has, err := m.Execute(tkn)
 	want, _ := c.Find("func")
@@ -44,8 +44,8 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 		Body: "body",
 	})
 	m := newManager(&fs.FileHandler{}, c)
-	interp := signals.NewInterpreter()
-	msg := "@LIST"
+	interp := stream.NewInterpreter()
+	msg := "@LST"
 	tkn := interp.Eval([]byte(msg))
 	has, err := m.Execute(tkn)
 	var want string
@@ -70,7 +70,7 @@ func TestUnrecognizedInputFails(t *testing.T) {
 		t.Error("failed to create snippet container")
 	}
 	m := newManager(&fs.FileHandler{}, snips)
-	interp := signals.NewInterpreter()
+	interp := stream.NewInterpreter()
 	msg := "search"
 	tkn := interp.Eval([]byte(msg))
 	_, err = m.Execute(tkn)

@@ -5,8 +5,8 @@ import (
 
 	"github.com/mdm-code/gsnip/fs"
 	"github.com/mdm-code/gsnip/parsing"
-	"github.com/mdm-code/gsnip/signals"
 	"github.com/mdm-code/gsnip/snippets"
+	"github.com/mdm-code/gsnip/stream"
 )
 
 type Manager struct {
@@ -34,14 +34,14 @@ At this moment, it is possible to perform two actions:
 1. List out all snippets stored in a container
 2. Retrieve the body of a searched snippet with optional replacements
 */
-func (m *Manager) Execute(token signals.Token) (string, error) {
-	if token.IsUnbound() {
+func (m *Manager) Execute(msg stream.Msg) (string, error) {
+	if msg.IsUnbound() {
 		return "", fmt.Errorf("empty strings are unbound")
 	}
 	// TODO: Switch for manager token kind (@LST, @DEL...)
 	// Make each one a separate function called from within the switch statement
-	switch token.IsList() {
-	case true:
+	switch msg.T() {
+	case stream.Lst:
 		result := ""
 		listing, err := m.c.List()
 		if err != nil {
@@ -52,8 +52,9 @@ func (m *Manager) Execute(token signals.Token) (string, error) {
 		}
 		return result, nil
 	default:
-		if searched, err := m.c.Find(token.Contents()); err != nil {
-			return "", fmt.Errorf("%s was not found", token.Contents())
+		if searched, err := m.c.Find(string(msg.Contents())); err != nil {
+
+			return "", fmt.Errorf("%s was not found", string(msg.Contents()))
 		} else {
 			return searched.Body, nil
 		}

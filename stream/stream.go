@@ -48,6 +48,7 @@ type Msg struct {
 	body []byte
 }
 
+// Tell the type of the message.
 func (m Msg) T() kind {
 	return m.knd
 }

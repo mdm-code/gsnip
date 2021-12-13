@@ -8,22 +8,27 @@ import (
 	"sync"
 )
 
-type FType uint8
-
 const (
 	Perm FType = iota
 	Temp
 )
 
-type ReadWriteSeekCloser interface {
+type FType uint8
+
+type Truncator interface {
+	Truncate(size int64) error
+}
+
+type ReadWriteSeekCloserTruncator interface {
 	io.Reader
 	io.Writer
 	io.Closer
 	io.Seeker
+	Truncator
 }
 
 type opener interface {
-	open() (*os.File, error)
+	open() (ReadWriteSeekCloserTruncator, error)
 	name() string
 }
 
@@ -35,7 +40,7 @@ type openTemp struct {
 	fname string
 }
 
-func (o *openPerm) open() (*os.File, error) {
+func (o *openPerm) open() (ReadWriteSeekCloserTruncator, error) {
 	f, err := os.OpenFile(o.fname, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
@@ -45,7 +50,10 @@ func (o *openPerm) open() (*os.File, error) {
 
 func (o *openPerm) name() string { return o.fname }
 
-func (o *openTemp) open() (f *os.File, err error) {
+func (o *openTemp) open() (ReadWriteSeekCloserTruncator, error) {
+	var err error
+	var f *os.File
+
 	if o.fname == "" {
 		f, err = ioutil.TempFile("/tmp", "*.snip")
 		if err != nil {
@@ -55,21 +63,13 @@ func (o *openTemp) open() (f *os.File, err error) {
 	} else {
 		f, err = os.OpenFile(o.fname, os.O_APPEND|os.O_RDWR, 0644)
 	}
-	return f, nil
+	return f, err
 }
 
 func (o *openTemp) name() string { return o.fname }
 
-// TODO: File handler should be able to truncate the file and receive
-// fresh contents from the snippet container. Then truncate the underlying
-// file and write fresh snippets.
-/*
-type Trucator interface {
-	trunc() error
-}
-*/
 type FileHandler struct {
-	file  ReadWriteSeekCloser
+	file  ReadWriteSeekCloserTruncator
 	mutex *sync.Mutex
 	opener
 }
@@ -111,6 +111,11 @@ func (h *FileHandler) Close() error {
 
 func (h *FileHandler) Seek(offset int64, whence int) (int64, error) {
 	return h.file.Seek(offset, whence)
+}
+
+func (h *FileHandler) Truncate(size int64) (err error) {
+	h.file.Truncate(0)
+	return
 }
 
 func (h *FileHandler) Lock() {

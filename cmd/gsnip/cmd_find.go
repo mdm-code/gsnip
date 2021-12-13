@@ -12,7 +12,7 @@ func init() {
 		cmd{
 			name:    "find",
 			fn:      cmdFind,
-			desc:    "gsnip\tfind\tfind specific snippet",
+			desc:    "gsnip\tfind\tfind a snippet",
 			aliases: []string{"f"},
 		},
 	)
@@ -26,7 +26,6 @@ func cmdFind(c net.Conn, args []string) error {
 	}
 	args = fs.Args()
 
-	// TODO: Change this is whole input reader to make it insert-ready
 	var params []string
 	if isPiped() {
 		s := bufio.NewScanner(os.Stdin)

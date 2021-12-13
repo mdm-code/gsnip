@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 
 	"github.com/mdm-code/gsnip/editor"
@@ -30,8 +29,8 @@ func cmdInsert(c net.Conn, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(data)
-	return nil
+	err = transact(c, "@INS", data)
+	return err
 }
 
 func insert() (string, error) {

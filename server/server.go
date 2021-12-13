@@ -9,7 +9,7 @@ import (
 
 	"github.com/mdm-code/gsnip/fs"
 	"github.com/mdm-code/gsnip/manager"
-	"github.com/mdm-code/gsnip/signals"
+	"github.com/mdm-code/gsnip/stream"
 )
 
 type Logger interface {
@@ -46,7 +46,7 @@ type UDPServer struct {
 	mngr   *manager.Manager
 	sigs   chan os.Signal
 	logr   Logger
-	interp signals.Interpreter
+	interp stream.Interpreter
 	fh     *fs.FileHandler
 }
 
@@ -80,7 +80,7 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 		mngr:   m,
 		sigs:   make(chan os.Signal, 1),
 		logr:   NewLogger(),
-		interp: signals.NewInterpreter(),
+		interp: stream.NewInterpreter(),
 		fh:     fh,
 	}, nil
 }
@@ -117,7 +117,7 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 // Await for incoming connections. This is a blocking function.
 func (s *UDPServer) AwaitConn() {
 	for {
-		buff := make([]byte, 512)
+		buff := make([]byte, 2048)
 		length, respAddr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
 			s.logr.Log("INFO", err)
@@ -129,9 +129,9 @@ func (s *UDPServer) AwaitConn() {
 }
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	token := s.interp.Eval(string(buff))
-	switch token.IsReload() {
-	case true:
+	msg := s.interp.Eval(buff)
+	switch msg.T() {
+	case stream.Rld:
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {
@@ -140,7 +140,7 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		}
 		return
 	default:
-		resp, err := s.mngr.Execute(token)
+		resp, err := s.mngr.Execute(msg)
 		if err != nil {
 			s.logr.Log("ERROR", err)
 			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)

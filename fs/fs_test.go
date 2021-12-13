@@ -1,13 +1,12 @@
 package fs
 
 import (
-	"os"
 	"sync"
 	"testing"
 )
 
 type mockFile struct {
-	os.File
+	ReadWriteSeekCloserTruncator
 }
 
 func (m mockFile) Seek(offset int64, whence int) (int64, error) {
@@ -28,7 +27,7 @@ type mockOpener struct {
 	fname string
 }
 
-func (m *mockOpener) open() (*os.File, error) {
+func (m *mockOpener) open() (ReadWriteSeekCloserTruncator, error) {
 	return nil, nil
 }
 
@@ -43,7 +42,6 @@ func TestFileHandlerInteraction(t *testing.T) {
 		&sync.Mutex{},
 		&mockOpener{},
 	}
-	fh.Reload()
 	fh.Read(dst)
 	fh.Write(dst)
 	fh.Seek(0, 0)

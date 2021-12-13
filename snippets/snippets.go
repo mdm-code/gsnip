@@ -25,7 +25,7 @@ type Snippet struct {
 
 // In-file snippet text representation.
 func (s Snippet) Repr() string {
-	return fmt.Sprintf(`startsnip %s "%s" %sendsnip`, s.Name, s.Desc, s.Body)
+	return fmt.Sprintf("startsnip %s \"%s\"\n%s\nendsnip\n\n", s.Name, s.Desc, s.Body)
 }
 
 type SnippetsMap struct {
@@ -58,7 +58,7 @@ type SnippetsDB struct {
 /*
 	NOTE: *SnippetsDB does not implement Container interface.
 */
-func NewSnippetsDB(dialect string, dsn string) (*SnippetsDB, error) {
+func NewSnippetsDB(dialect string, dsn string) (Container, error) {
 	db, err := sql.Open(dialect, dsn)
 	if err != nil {
 		return nil, err
@@ -72,8 +72,13 @@ func NewSnippetsDB(dialect string, dsn string) (*SnippetsDB, error) {
 
 func (s *SnippetsMap) Insert(snip Snippet) (err error) {
 	s.Lock()
-	s.cntr[snip.Name], err = snip, nil
-	s.Unlock()
+	defer s.Unlock()
+	if _, exists := s.cntr[snip.Name]; !exists {
+		s.cntr[snip.Name] = snip
+		err = nil
+	} else {
+		err = fmt.Errorf("snippet %s already existis", snip.Name)
+	}
 	return
 }
 
@@ -197,4 +202,14 @@ func (s *SnippetsDB) List() ([]string, error) {
 		result = append(result, str)
 	}
 	return result, nil
+}
+
+// TODO: This method has to be implemented
+func (s *SnippetsDB) Delete(key string) error {
+	return nil
+}
+
+// TODO: This method has to be implemented
+func (s *SnippetsDB) ListObj() (result []Snippet, err error) {
+	return
 }

@@ -11,7 +11,7 @@ import (
 
 func TestSnippetRepr(t *testing.T) {
 	s := Snippet{"func", "a function", "def func(): return None"}
-	want := fmt.Sprintf(`startsnip %s "%s" %sendsnip`, s.Name, s.Desc, s.Body)
+	want := fmt.Sprintf("startsnip %s \"%s\"\n%s\nendsnip\n\n", s.Name, s.Desc, s.Body)
 	if want != s.Repr() {
 		t.Errorf("want: %s; has %s", want, s.Repr())
 	}

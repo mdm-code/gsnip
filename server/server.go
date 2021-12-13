@@ -7,8 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mdm-code/gsnip/fs"
 	"github.com/mdm-code/gsnip/manager"
-	"github.com/mdm-code/gsnip/signals"
+	"github.com/mdm-code/gsnip/stream"
 )
 
 type Logger interface {
@@ -45,8 +46,8 @@ type UDPServer struct {
 	mngr   *manager.Manager
 	sigs   chan os.Signal
 	logr   Logger
-	interp signals.Interpreter
-	fname  string
+	interp stream.Interpreter
+	fh     *fs.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -63,7 +64,11 @@ func NewServer(ntwrk string, addr string, port int, fname string) (Server, error
 }
 
 func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
-	m, err := manager.NewManager(fname)
+	fh, err := fs.NewFileHandler(fname, fs.Perm)
+	if err != nil {
+		return nil, err
+	}
+	m, err := manager.NewManager(fh)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +80,8 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 		mngr:   m,
 		sigs:   make(chan os.Signal, 1),
 		logr:   NewLogger(),
-		interp: signals.NewInterpreter(),
-		fname:  fname,
+		interp: stream.NewInterpreter(),
+		fh:     fh,
 	}, nil
 }
 
@@ -87,6 +92,8 @@ func (s *UDPServer) Listen() (err error) {
 }
 
 func (s *UDPServer) ShutDown() {
+	// NOTE: file handler closes down the moment the server is closed
+	s.fh.Close()
 	s.conn.Close()
 }
 
@@ -96,12 +103,11 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 		for {
 			select {
 			case <-s.sigs:
-				m, err := manager.NewManager(s.fname)
+				err := s.mngr.Reload()
 				if err != nil {
-					s.logr.Log("ERROR", "failed to reload source file")
+					s.logr.Log("ERROR", err)
 					continue
 				}
-				s.mngr = m
 				s.logr.Log("INFO", "reloaded snippet source file")
 			}
 		}
@@ -111,7 +117,7 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 // Await for incoming connections. This is a blocking function.
 func (s *UDPServer) AwaitConn() {
 	for {
-		buff := make([]byte, 512)
+		buff := make([]byte, 2048)
 		length, respAddr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
 			s.logr.Log("INFO", err)
@@ -123,9 +129,9 @@ func (s *UDPServer) AwaitConn() {
 }
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	token := s.interp.Eval(string(buff))
-	switch token.IsReload() {
-	case true:
+	msg := s.interp.Eval(buff)
+	switch msg.T() {
+	case stream.Rld:
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {
@@ -134,7 +140,7 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		}
 		return
 	default:
-		resp, err := s.mngr.Execute(token)
+		resp, err := s.mngr.Execute(msg)
 		if err != nil {
 			s.logr.Log("ERROR", err)
 			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)

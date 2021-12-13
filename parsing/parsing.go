@@ -55,7 +55,7 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	parsed, err := p.sm.run(i)
+	parsed, err := p.Run(i)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,13 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	return smap, nil
 }
 
+func (p *Parser) Run(i io.Reader) ([]snippets.Snippet, error) {
+	result, err := p.sm.run(i)
+	return result, err
+}
+
 func (sm *StateMachine) scanLine(line string) (State, string) {
-	if strings.HasPrefix(line, "startsnip") {
+	if l := strings.TrimSpace(line); strings.HasPrefix(l, "startsnip") {
 		return SIGNATURE, line
 	}
 	return SCANNING, ""
@@ -116,7 +121,7 @@ func takeBetween(s string, delim rune) (string, bool) {
 }
 
 func (sm *StateMachine) scanBody(line string) (State, string) {
-	if strings.HasPrefix(line, "endsnip") {
+	if l := strings.TrimSpace(line); strings.HasPrefix(l, "endsnip") {
 		sm.parsed[len(sm.parsed)-1].Body = strings.Join(sm.body, "\n")
 		sm.body = sm.body[:0]
 		return SCANNING, ""
@@ -127,10 +132,12 @@ func (sm *StateMachine) scanBody(line string) (State, string) {
 
 func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 	s := bufio.NewScanner(f)
+	sm.reset()
+
 	var line string
 	for {
 		if sm.state == ERROR {
-			return nil, fmt.Errorf("Error on line: %s", line)
+			return nil, fmt.Errorf("error on line: %s", line)
 		}
 		if line == "" {
 			if ok := s.Scan(); !ok {
@@ -141,5 +148,16 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 		callable := sm.transitions[sm.state]
 		sm.state, line = callable(sm, line)
 	}
+
+	if sm.parsed == nil {
+		return sm.parsed, fmt.Errorf("unable to parse any snippets")
+	}
 	return sm.parsed, nil
+}
+
+// Reset the state of the object.
+func (sm *StateMachine) reset() {
+	sm.parsed = nil
+	sm.body = nil
+	sm.state = SCANNING
 }

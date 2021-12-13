@@ -13,12 +13,19 @@ type Container interface {
 	Insert(Snippet) error
 	Find(string) (Snippet, error)
 	List() ([]string, error)
+	Delete(string) error
+	ListObj() ([]Snippet, error)
 }
 
 type Snippet struct {
 	Name string
 	Desc string
 	Body string
+}
+
+// In-file snippet text representation.
+func (s Snippet) Repr() string {
+	return fmt.Sprintf("startsnip %s \"%s\"\n%s\nendsnip\n\n", s.Name, s.Desc, s.Body)
 }
 
 type SnippetsMap struct {
@@ -30,11 +37,6 @@ type SnippetsMap struct {
 //
 // Allowed types (t): map
 func NewSnippetsContainer(t string) (Container, error) {
-	/*
-		NOTE: At some point, I might want to add case "db" with:
-			dns := "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
-			return NewSnippetsDB("postgres", dns)
-	*/
 	switch t {
 	case "map":
 		return NewSnippetsMap(), nil
@@ -53,6 +55,9 @@ type SnippetsDB struct {
 	db *sql.DB
 }
 
+/*
+	NOTE: *SnippetsDB does not implement Container interface.
+*/
 func NewSnippetsDB(dialect string, dsn string) (Container, error) {
 	db, err := sql.Open(dialect, dsn)
 	if err != nil {
@@ -67,8 +72,13 @@ func NewSnippetsDB(dialect string, dsn string) (Container, error) {
 
 func (s *SnippetsMap) Insert(snip Snippet) (err error) {
 	s.Lock()
-	s.cntr[snip.Name], err = snip, nil
-	s.Unlock()
+	defer s.Unlock()
+	if _, exists := s.cntr[snip.Name]; !exists {
+		s.cntr[snip.Name] = snip
+		err = nil
+	} else {
+		err = fmt.Errorf("snippet %s already existis", snip.Name)
+	}
 	return
 }
 
@@ -85,6 +95,7 @@ func (s *SnippetsMap) Find(str string) (Snippet, error) {
 
 func (s *SnippetsMap) List() ([]string, error) {
 	s.Lock()
+	defer s.Unlock()
 	var result []string
 	var str string
 	for _, v := range s.cntr {
@@ -92,8 +103,23 @@ func (s *SnippetsMap) List() ([]string, error) {
 		result = append(result, str)
 	}
 	sort.Strings(result)
-	s.Unlock()
 	return result, nil
+}
+
+func (s *SnippetsMap) Delete(key string) error {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.cntr, key)
+	return nil
+}
+
+func (s *SnippetsMap) ListObj() (result []Snippet, err error) {
+	s.Lock()
+	defer s.Unlock()
+	for _, v := range s.cntr {
+		result = append(result, v)
+	}
+	return
 }
 
 func (s *SnippetsDB) Insert(snip Snippet) error {
@@ -176,4 +202,14 @@ func (s *SnippetsDB) List() ([]string, error) {
 		result = append(result, str)
 	}
 	return result, nil
+}
+
+// TODO: This method has to be implemented
+func (s *SnippetsDB) Delete(key string) error {
+	return nil
+}
+
+// TODO: This method has to be implemented
+func (s *SnippetsDB) ListObj() (result []Snippet, err error) {
+	return
 }

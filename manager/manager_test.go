@@ -4,12 +4,14 @@ import (
 	"testing"
 
 	"github.com/mdm-code/gsnip/fs"
+	"github.com/mdm-code/gsnip/parsing"
 	"github.com/mdm-code/gsnip/snippets"
 	"github.com/mdm-code/gsnip/stream"
 )
 
 func TestProgramAcceptsFindCmd(t *testing.T) {
 	c := snippets.NewSnippetsMap()
+	p := parsing.NewParser()
 
 	s := snippets.Snippet{
 		Name: "func",
@@ -17,7 +19,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 		Body: "body",
 	}
 	c.Insert(s)
-	m := newManager(&fs.FileHandler{}, c)
+	m := newManager(&fs.FileHandler{}, c, &p)
 	input := "@FND func"
 	interp := stream.NewInterpreter()
 	tkn := interp.Eval([]byte(input))
@@ -43,7 +45,9 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 		Desc: "class method",
 		Body: "body",
 	})
-	m := newManager(&fs.FileHandler{}, c)
+	p := parsing.NewParser()
+
+	m := newManager(&fs.FileHandler{}, c, &p)
 	interp := stream.NewInterpreter()
 	msg := "@LST"
 	tkn := interp.Eval([]byte(msg))
@@ -69,7 +73,9 @@ func TestUnrecognizedInputFails(t *testing.T) {
 	if err != nil {
 		t.Error("failed to create snippet container")
 	}
-	m := newManager(&fs.FileHandler{}, snips)
+	p := parsing.NewParser()
+
+	m := newManager(&fs.FileHandler{}, snips, &p)
 	interp := stream.NewInterpreter()
 	msg := "search"
 	tkn := interp.Eval([]byte(msg))

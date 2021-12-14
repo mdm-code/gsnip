@@ -9,6 +9,9 @@ import (
 	"github.com/mdm-code/gsnip/stream"
 )
 
+// NOTE: Manager.list and Manager.delete are hard to test because
+//       they reference an underlying file object.
+
 var c snippets.Container
 var p parsing.Parser
 

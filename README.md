@@ -1,18 +1,21 @@
+![(logo)](./logo.png)
+
 # Gsnip
 
-This my personal snippet manager. It lets you find and print out snippets
-stored in a text file and written with straightforward syntax rules. My goal
-was to keep the program as simple as possible, so there aren't any features
-that would allow you to insert or delete snippet definitions other than by
-manually editing the source file. It simply scans the source file with snippets
-and offers an interface to retrieve them.
+[![Action Status](https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg)](https://github.com/mdm-code/gsnip/actions)
+
+This my personal snippet manager. It lets you find, insert, delete and list out
+snippets stored in a text file and written with straightforward, I believe,
+syntax rules. My goal was to keep the program as simple as possible: it scans
+the source file with snippets and offers an interface to interact with the
+file.
 
 There are two parts of this workflow: one, `gsnipd`, a UDP-based server
 handling connections, and `gsnip`, which is the client that relies on `FD0` or
 `SDTIN` to message the server.
 
-Both `gsnip` and `gsnipd` print out moderately useful information with `--help`
-attribute.
+`gsnipd`, `gsnip` and all its subcommands print out useful information with
+`--help`.
 
 You want to first spin up the server with either of these commands:
 
@@ -25,26 +28,37 @@ The first one will write `STDERR` to the terminal so that you can see server
 messages. The other sends all messages to `/dev/null` and gets detached from
 the current session.
 
-Then you want to message the server like this:
+Then you can interact with the server using `gsnip` client like this:
 
 ```sh
-echo [snip-name] | gsnip
-echo list | gsnip
+echo [snip-name] | gsnip find
+gsnip list
+echo [snip-name] | gsnip delete
+gsnip insert
+gsnip reload
 ```
 
-You can query the server for any snippet stored in the source file.
-Alternatively, you can ask the server to list out all available snippets with
-the `@LIST` command.
+You can query the server with `find` for any snippet stored in the source file.
+Alternatively, you can ask the server to `list` out all available snippets.
+You can delete existing snippets with `delete` subcommand. You can also `insert`
+new snippets through an editor.
 
-You can reload the source snippet file at the server runtime by piping the
-keyword `@RELOAD` to `gsnip` client, which is the equivalent of sending `SIGHUP`
-to the process using `kill -1 [pid]`. The latter is annoying because you have
-to find the process id with `ps` before sending the signal. Another way would
-be to write PID to a known file that the client could access.
+You can reload the source snippet file at the server runtime by calling the
+`gsnip` client with the `reaload` subcommand, which is the equivalent of
+sending `SIGHUP` to the process using `kill -1 [pid]`. The latter is annoying
+because you have to find the process id with `ps` before sending the signal.
+Another way would be to write PID to a known file that the client could access.
 
-Here is a list of restricted names (`gsnip` commands):
-1. @LIST
-2. @RELOAD
+There are five headers that the `gsnipd` server can understand:
+
+- @LST
+- @RLD
+- @FND
+- @INS
+- @DEL
+
+They correspond to the client subcommands.
+
 
 The idea was to use `gsnip` as an application agnostic tool. Since it operates
 on standard file descriptors, it can be used in most Unix pipes and most

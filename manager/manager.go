@@ -44,65 +44,80 @@ func (m *Manager) Execute(msg stream.Msg) (string, error) {
 	}
 	switch msg.T() {
 	case stream.Lst:
-		result := ""
-		listing, err := m.c.List()
-		if err != nil {
-			return "", fmt.Errorf("failed to list snippets")
-		}
-		for _, s := range listing {
-			result = result + s + "\n"
-		}
-		return result, nil
+		return m.list()
 	case stream.Fnd:
-		if searched, err := m.c.Find(string(msg.Contents())); err != nil {
-
-			return "", fmt.Errorf("%s was not found", string(msg.Contents()))
-		} else {
-			return searched.Body, nil
-		}
+		return m.find(string(msg.Contents()))
 	case stream.Ins:
-		reader := strings.NewReader(string(msg.Contents()))
-		parsed, err := m.p.Run(reader)
-		if err != nil {
-			return "ERROR", err
-		}
-		for _, p := range parsed {
-			err = m.c.Insert(p)
-			if err != nil {
-				return "ERROR", err
-			}
-		}
-		snips, err := m.c.ListObj()
-		if err != nil {
-			return "ERROR", err
-		}
-		err = m.fh.Truncate(0)
-		for _, s := range snips {
-			m.fh.Write([]byte(s.Repr()))
-		}
-		err = m.Reload()
-		if err != nil {
-			return "ERROR", err
-		}
-		return "", nil
+		return m.insert(msg)
 	case stream.Del:
-		m.c.Delete(string(msg.Contents()))
-		snips, err := m.c.ListObj()
-		if err != nil {
-			return "ERROR", err
-		}
-		err = m.fh.Truncate(0)
-		for _, s := range snips {
-			m.fh.Write([]byte(s.Repr()))
-		}
-		err = m.Reload()
-		if err != nil {
-			return "ERROR", err
-		}
-		return "", nil
+		return m.delete(string(msg.Contents()))
 	default:
 		return "ERROR", fmt.Errorf("message kind %s is not supported", msg.TString())
 	}
+}
+
+func (m *Manager) list() (string, error) {
+	result := ""
+	listing, err := m.c.List()
+	if err != nil {
+		return "", fmt.Errorf("failed to list snippets")
+	}
+	for _, s := range listing {
+		result = result + s + "\n"
+	}
+	return result, nil
+}
+
+func (m *Manager) find(s string) (string, error) {
+	if searched, err := m.c.Find(s); err != nil {
+		return "", fmt.Errorf("%s was not found", s)
+	} else {
+		return searched.Body, nil
+	}
+}
+
+func (m *Manager) insert(msg stream.Msg) (string, error) {
+	reader := strings.NewReader(string(msg.Contents()))
+	parsed, err := m.p.Run(reader)
+	if err != nil {
+		return "ERROR", err
+	}
+	for _, p := range parsed {
+		err = m.c.Insert(p)
+		if err != nil {
+			return "ERROR", err
+		}
+	}
+	snips, err := m.c.ListObj()
+	if err != nil {
+		return "ERROR", err
+	}
+	err = m.fh.Truncate(0)
+	for _, s := range snips {
+		m.fh.Write([]byte(s.Repr()))
+	}
+	err = m.Reload()
+	if err != nil {
+		return "ERROR", err
+	}
+	return "", nil
+}
+
+func (m *Manager) delete(s string) (string, error) {
+	m.c.Delete(s)
+	snips, err := m.c.ListObj()
+	if err != nil {
+		return "ERROR", err
+	}
+	err = m.fh.Truncate(0)
+	for _, s := range snips {
+		m.fh.Write([]byte(s.Repr()))
+	}
+	err = m.Reload()
+	if err != nil {
+		return "ERROR", err
+	}
+	return "", nil
 }
 
 // Reload all snippets from the source file.

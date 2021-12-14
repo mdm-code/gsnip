@@ -9,10 +9,28 @@ import (
 	"github.com/mdm-code/gsnip/stream"
 )
 
-func TestProgramAcceptsFindCmd(t *testing.T) {
-	c := snippets.NewSnippetsMap()
-	p := parsing.NewParser()
+// NOTE: Manager.list and Manager.delete are hard to test because
+//       they reference an underlying file object.
 
+var c snippets.Container
+var p parsing.Parser
+
+func init() {
+	c, _ = snippets.NewSnippetsContainer("map")
+	c.Insert(snippets.Snippet{
+		Name: "func",
+		Desc: "simple function",
+		Body: "body",
+	})
+	c.Insert(snippets.Snippet{
+		Name: "method",
+		Desc: "class method",
+		Body: "body",
+	})
+	p = parsing.NewParser()
+}
+
+func TestProgramAcceptsFindCmd(t *testing.T) {
 	s := snippets.Snippet{
 		Name: "func",
 		Desc: "desc",
@@ -31,22 +49,6 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
-	c, err := snippets.NewSnippetsContainer("map")
-	if err != nil {
-		t.Error("failed to create snippet container")
-	}
-	c.Insert(snippets.Snippet{
-		Name: "func",
-		Desc: "simple function",
-		Body: "body",
-	})
-	c.Insert(snippets.Snippet{
-		Name: "method",
-		Desc: "class method",
-		Body: "body",
-	})
-	p := parsing.NewParser()
-
 	m := newManager(&fs.FileHandler{}, c, &p)
 	interp := stream.NewInterpreter()
 	msg := "@LST"
@@ -69,18 +71,36 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
-	snips, err := snippets.NewSnippetsContainer("map")
-	if err != nil {
-		t.Error("failed to create snippet container")
-	}
-	p := parsing.NewParser()
-
-	m := newManager(&fs.FileHandler{}, snips, &p)
+	m := newManager(&fs.FileHandler{}, c, &p)
 	interp := stream.NewInterpreter()
 	msg := "search"
 	tkn := interp.Eval([]byte(msg))
-	_, err = m.Execute(tkn)
+	_, err := m.Execute(tkn)
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")
+	}
+}
+
+func TestExecuteList(t *testing.T) {
+	m := newManager(&fs.FileHandler{}, c, &p)
+	result, err := m.list()
+	if err != nil {
+		t.Errorf("got %v", result)
+	}
+}
+
+func TestExecuteFind(t *testing.T) {
+	m := newManager(&fs.FileHandler{}, c, &p)
+	result, err := m.find("func")
+	if err != nil {
+		t.Errorf("got: %v", result)
+	}
+}
+
+func TestExecuteFindFails(t *testing.T) {
+	m := newManager(&fs.FileHandler{}, c, &p)
+	result, err := m.find("non-existent")
+	if err == nil {
+		t.Errorf("got: %v", result)
 	}
 }

@@ -1,12 +1,9 @@
 package snippets
 
 import (
-	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestSnippetRepr(t *testing.T) {
@@ -71,88 +68,5 @@ func TestSnippetsMapDelete(t *testing.T) {
 	sm.Delete(toDel)
 	if _, err := sm.Find(toDel); err == nil {
 		t.Errorf("snippet `%s` is still in map", toDel)
-	}
-}
-
-func TestMockDBInsert(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Errorf("error occurred when mocking a database: %s", err)
-	}
-	defer db.Close()
-
-	stmt := `INSERT INTO snippet`
-	args := []driver.Value{"func", "simple func", "def main(): pass"}
-	result := sqlmock.NewResult(0, 1)
-	mock.ExpectBegin()
-	mock.ExpectPrepare(stmt)
-	mock.ExpectExec(stmt).WithArgs(args...).WillReturnResult(result)
-	mock.ExpectCommit()
-
-	s := SnippetsDB{
-		db: db,
-	}
-	snip := Snippet{Name: "func", Desc: "simple func", Body: "def main(): pass"}
-	if err := s.Insert(snip); err != nil {
-		t.Errorf("unexpected error when executing INSERT: %s", err)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations were left unfulfilled: %s", err)
-	}
-}
-
-func TestDBFind(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Errorf("error occurred when mocking a database: %s", err)
-	}
-	defer db.Close()
-
-	stmt := `SELECT (.*) FROM snippet`
-	rows := sqlmock.NewRows([]string{"name", "desc", "body"}).
-		AddRow("func", "simple func", "def main(): pass")
-
-	mock.ExpectPrepare(stmt).
-		ExpectQuery().
-		WillReturnRows(rows)
-
-	s := SnippetsDB{
-		db: db,
-	}
-	if _, err := s.Find("func"); err != nil {
-		t.Errorf("unexpected error when executing SELECT: %s", err)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations were left unfulfilled: %s", err)
-	}
-}
-
-func TestDBList(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Errorf("error occurred when mocking a database: %s", err)
-	}
-	defer db.Close()
-
-	stmt := `SELECT (.*) FROM snippet`
-	rows := sqlmock.NewRows([]string{"name", "desc"}).
-		AddRow("func", "simple func").
-		AddRow("gfunc", "function in Go")
-
-	mock.ExpectPrepare(stmt).
-		ExpectQuery().
-		WillReturnRows(rows)
-
-	s := SnippetsDB{
-		db: db,
-	}
-	if _, err := s.List(); err != nil {
-		t.Errorf("unexpected error when executing SELECT: %s", err)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations were left unfulfilled: %s", err)
 	}
 }

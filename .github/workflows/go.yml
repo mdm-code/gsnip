@@ -2,7 +2,7 @@ name: gsnip CI/CD
 
 on:
   push:
-    branches: [ main, gh-workflow ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 

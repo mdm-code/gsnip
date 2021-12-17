@@ -41,13 +41,13 @@ type Server interface {
 }
 
 type UDPServer struct {
-	addr   net.UDPAddr
-	conn   *net.UDPConn
-	mngr   *manager.Manager
-	sigs   chan os.Signal
-	logr   Logger
-	interp stream.Interpreter
-	fh     *fs.FileHandler
+	addr net.UDPAddr
+	conn *net.UDPConn
+	mngr *manager.Manager
+	sigs chan os.Signal
+	logr Logger
+	itrp stream.Interpreter
+	fh   *fs.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -77,11 +77,11 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 			IP:   net.ParseIP(addr),
 			Port: port,
 		},
-		mngr:   m,
-		sigs:   make(chan os.Signal, 1),
-		logr:   NewLogger(),
-		interp: stream.NewInterpreter(),
-		fh:     fh,
+		mngr: m,
+		sigs: make(chan os.Signal, 1),
+		logr: NewLogger(),
+		itrp: stream.NewInterpreter(),
+		fh:   fh,
 	}, nil
 }
 
@@ -129,7 +129,7 @@ func (s *UDPServer) AwaitConn() {
 }
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	msg := s.interp.Eval(buff)
+	msg := s.itrp.Eval(buff)
 	switch msg.T() {
 	case stream.Rld:
 		s.sigs <- syscall.SIGHUP

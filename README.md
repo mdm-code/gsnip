@@ -7,17 +7,16 @@
 This my personal snippet manager. It lets you find, insert, delete and list out
 snippets stored in a text file and written with straightforward, I believe,
 syntax rules. My goal was to keep the program as simple as possible: it scans
-the source file with snippets and offers an interface to interact with the
-file.
+the source file with snippets and offers an interface to interact with it.
 
-There are two parts of this workflow: one, `gsnipd`, a UDP-based server
+There are two parts of the workflow: one, `gsnipd`, a UDP-based server
 handling connections, and `gsnip`, which is the client that relies on `FD0` or
 `SDTIN` to message the server.
 
 `gsnipd`, `gsnip` and all its subcommands print out useful information with
 `--help`.
 
-You want to first spin up the server with either of these commands:
+First, you want to spin up the server with either of these commands:
 
 ```sh
 gsnipd
@@ -25,8 +24,8 @@ gsnipd &>/dev/null &
 ```
 
 The first one will write `STDERR` to the terminal so that you can see server
-messages. The other sends all messages to `/dev/null` and gets detached from
-the current session.
+messages. The other one sends all messages to `/dev/null` and gets detached
+from the current session.
 
 Then you can interact with the server using `gsnip` client like this:
 
@@ -41,7 +40,20 @@ gsnip reload
 You can query the server with `find` for any snippet stored in the source file.
 Alternatively, you can ask the server to `list` out all available snippets.
 You can delete existing snippets with `delete` subcommand. You can also `insert`
-new snippets through an editor.
+new snippets through an editor or `STDIN`.
+
+In order to add a new snippet right from the command line, the easy way would be
+to use HereDoc like this, for instance:
+
+```sh
+gsnip insert << EOF
+startsnip test "this is just a test snippet"
+func test() bool {
+	return true
+}
+endsnip
+EOF
+```
 
 You can reload the source snippet file at the server runtime by calling the
 `gsnip` client with the `reaload` subcommand, which is the equivalent of
@@ -98,9 +110,9 @@ fields. There isn't really more to it---it does the same work as a flat file.
 
 ## Installation
 
-Consult `Makefile`; there is the `install` directive that you would call with
-`make install`, and that's pretty much it when it comes to installation of a Go
-program.
+Consult `Makefile`; there is an `install` directive that you can call with
+`make install`, and that's pretty much it when it comes to the installation of
+this Go program.
 
 
 ## Testing
@@ -108,6 +120,6 @@ program.
 I am using the `testing` package from the Go standard library, so you can call
 `test ./... -v`, or you can resort to `Makefile` and use `make test` command. I
 am really not worried about the coverage at this stage; the program is way to
-simple and the test as they currently are, they cover all of the functional
+simple and test as they currently are, they cover all of the functional
 bottlenecks of the program. However, if you want to peek at the coverage, type
 `make cover` and the `make clean` once you're done.

@@ -148,10 +148,6 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 		callable := sm.transitions[sm.state]
 		sm.state, line = callable(sm, line)
 	}
-
-	if sm.parsed == nil {
-		return sm.parsed, fmt.Errorf("unable to parse any snippets")
-	}
 	return sm.parsed, nil
 }
 

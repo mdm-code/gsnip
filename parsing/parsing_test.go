@@ -56,13 +56,6 @@ God knows what this is.
 endsnip`),
 }
 
-var failingFileReaders = []io.Reader{
-	strings.NewReader(`this string makes no sense
-it contains some lines but there are no snippets
-`),
-	strings.NewReader(""),
-}
-
 func TestParsing(t *testing.T) {
 	snips, err := snippets.NewSnippetsContainer("map")
 	if err != nil {
@@ -150,16 +143,6 @@ func TestTakeBetweenFails(t *testing.T) {
 		_, ok := takeBetween(i.text, i.delim)
 		if ok {
 			t.Errorf("Input :: %s :: should error out", i.text)
-		}
-	}
-}
-
-func TestParserRun(t *testing.T) {
-	parser := NewParser()
-	for _, r := range failingFileReaders {
-		result, err := parser.Run(r)
-		if err == nil {
-			t.Errorf("want empty slice; has %v", result)
 		}
 	}
 }

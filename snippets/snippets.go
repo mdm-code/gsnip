@@ -55,7 +55,7 @@ func (s *SnippetsMap) Insert(snip Snippet) (err error) {
 		s.cntr[snip.Name] = snip
 		err = nil
 	} else {
-		err = fmt.Errorf("snippet %s already existis", snip.Name)
+		err = fmt.Errorf("snippet %s already exists", snip.Name)
 	}
 	return
 }

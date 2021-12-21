@@ -57,6 +57,26 @@ func TestSnippetsMapList(t *testing.T) {
 	}
 }
 
+func TestSnippetsListObj(t *testing.T) {
+	ss := NewSnippetsMap()
+	ss.cntr = map[string]Snippet{
+		"func":   {"func", "Go function", "func() {}"},
+		"struct": {"struct", "Go struct", "type struct {}"},
+		"map":    {"map", "Go map", "map[string]string"},
+	}
+	want := []Snippet{
+		{"func", "Go function", "func() {}"},
+		{"struct", "Go struct", "type struct {}"},
+		{"map", "Go map", "map[string]string"},
+	}
+	objects, _ := ss.ListObj()
+	for i, o := range objects {
+		if !reflect.DeepEqual(o, want[i]) {
+			t.Errorf("want: %v; has %v", o, want[i])
+		}
+	}
+}
+
 func TestSnippetsMapDelete(t *testing.T) {
 	sm := NewSnippetsMap()
 	sm.cntr = map[string]Snippet{

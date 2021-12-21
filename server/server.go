@@ -38,6 +38,7 @@ type Server interface {
 	ShutDown()
 	AwaitSignal(...os.Signal)
 	AwaitConn()
+	Log(string, interface{})
 }
 
 type UDPServer struct {
@@ -87,7 +88,7 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 
 func (s *UDPServer) Listen() (err error) {
 	s.conn, err = net.ListenUDP("udp", &s.addr)
-	s.logr.Log("INFO", "listening on "+s.addr.String())
+	s.Log("INFO", "listening on "+s.addr.String())
 	return
 }
 
@@ -105,10 +106,10 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 			case <-s.sigs:
 				err := s.mngr.Reload()
 				if err != nil {
-					s.logr.Log("ERROR", err)
+					s.Log("ERROR", err)
 					continue
 				}
-				s.logr.Log("INFO", "reloaded snippet source file")
+				s.Log("INFO", "reloaded snippet source file")
 			}
 		}
 	}()
@@ -120,10 +121,10 @@ func (s *UDPServer) AwaitConn() {
 		buff := make([]byte, 2048)
 		length, respAddr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
-			s.logr.Log("INFO", err)
+			s.Log("INFO", err)
 			continue
 		}
-		s.logr.Log("INFO", fmt.Sprintf("read %s from %v", buff, respAddr))
+		s.Log("INFO", fmt.Sprintf("read %s from %v", buff, respAddr))
 		go s.respond(respAddr, buff[:length])
 	}
 }
@@ -135,17 +136,17 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			return
 		}
 		return
 	default:
 		resp, err := s.mngr.Execute(msg)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)
 			if err != nil {
-				s.logr.Log("ERROR", err)
+				s.Log("ERROR", err)
 				return
 			}
 			return
@@ -153,9 +154,13 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		outMsg := []byte(resp)
 		_, err = s.conn.WriteToUDP(outMsg, addr)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			return
 		}
-		s.logr.Log("INFO", "write successful")
+		s.Log("INFO", "write successful")
 	}
+}
+
+func (s *UDPServer) Log(level string, msg interface{}) {
+	s.logr.Log(level, msg)
 }

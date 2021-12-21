@@ -1,6 +1,7 @@
 package parsing
 
 import (
+	"errors"
 	"io"
 	"reflect"
 	"strings"
@@ -54,6 +55,13 @@ endsnip`),
 startsnip
 God knows what this is.
 endsnip`),
+}
+
+var failingFileReaders = []io.Reader{
+	strings.NewReader(`this string makes no sense
+it contains some lines but there are no snippets
+`),
+	strings.NewReader(""),
 }
 
 func TestParsing(t *testing.T) {
@@ -144,5 +152,35 @@ func TestTakeBetweenFails(t *testing.T) {
 		if ok {
 			t.Errorf("Input :: %s :: should error out", i.text)
 		}
+	}
+}
+
+func TestParserRun(t *testing.T) {
+	parser := NewParser()
+	for _, r := range failingFileReaders {
+		result, err := parser.Run(r)
+		if err == nil {
+			t.Errorf("want empty slice; has %v", result)
+		}
+	}
+}
+
+func TestParserRunEmpty(t *testing.T) {
+	parser := NewParser()
+	_, err := parser.Run(strings.NewReader(``))
+	if !errors.Is(err, ErrEmptyFile) {
+		t.Errorf("expected parser to raise %w", ErrEmptyFile)
+	}
+}
+
+func TestParserRunErrLine(t *testing.T) {
+	parser := NewParser()
+	_, err := parser.Run(strings.NewReader(`startsnip
+fn main() {
+	println!("Hello, world!");
+}
+endsnip`))
+	if !errors.Is(err, ErrLine) {
+		t.Errorf("expected parser to raise %w", ErrLine)
 	}
 }

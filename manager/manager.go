@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,7 +20,7 @@ type Manager struct {
 func NewManager(fh *fs.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(fh)
-	if err != nil {
+	if err != nil && !errors.Is(err, parsing.ErrEmptyFile) {
 		return newManager(nil, nil, nil), err
 	}
 	return newManager(fh, snpts, &parser), nil
@@ -29,7 +30,6 @@ func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser)
 	return &Manager{fh, snpts, p}
 }
 
-// TODO: Replace each case scope with a method.
 /* Run a server command against the snippet container.
 
 Allowed commands:

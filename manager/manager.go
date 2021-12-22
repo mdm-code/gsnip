@@ -113,6 +113,7 @@ func (m *Manager) delete(s string) (string, error) {
 	for _, s := range snips {
 		m.fh.Write([]byte(s.Repr()))
 	}
+
 	err = m.Reload()
 	if err != nil {
 		return "ERROR", err
@@ -128,7 +129,7 @@ func (m *Manager) Reload() error {
 	}
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(m.fh)
-	if err != nil {
+	if err != nil && !errors.Is(err, parsing.ErrEmptyFile) {
 		return err
 	}
 	m.c = snpts

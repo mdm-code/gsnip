@@ -23,6 +23,18 @@ gsnipd
 gsnipd &>/dev/null &
 ```
 
+The source file used to store snippets can be passed as an argument to the
+`gsnipd` program. If it isn't, the program will create an empty file at the
+first available `gsnip` subdirectory at XDG data directories in this order:
+
+```sh
+$HOME/.local/share/gsnip/
+/usr/local/share/gsnip/
+/usr/share/gsnip/
+```
+
+It will error out if it could not find one.
+
 The first one will write `STDERR` to the terminal so that you can see server
 messages. The other one sends all messages to `/dev/null` and gets detached
 from the current session.

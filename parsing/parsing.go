@@ -63,7 +63,7 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	}
 	parsed, err := p.Run(i)
 	if err != nil {
-		return nil, err
+		return smap, err
 	}
 	for _, s := range parsed {
 		smap.Insert(s)

@@ -55,7 +55,7 @@ func (s *SnippetsMap) Insert(snip Snippet) (err error) {
 		s.cntr[snip.Name] = snip
 		err = nil
 	} else {
-		err = fmt.Errorf("snippet %s already existis", snip.Name)
+		err = fmt.Errorf("snippet %s already exists", snip.Name)
 	}
 	return
 }
@@ -97,5 +97,13 @@ func (s *SnippetsMap) ListObj() (result []Snippet, err error) {
 	for _, v := range s.cntr {
 		result = append(result, v)
 	}
+	result = sorted(result)
 	return
+}
+
+func sorted(s []Snippet) []Snippet {
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].Name < s[j].Name
+	})
+	return s
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 var (
@@ -13,6 +14,8 @@ var (
 	port string
 	conn net.Conn
 )
+
+var errPrefix string = "ERROR"
 
 type cmd struct {
 	name    string
@@ -49,6 +52,7 @@ func main() {
 	err = dispatchCmd(conn, args)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
+		os.Exit(1)
 	}
 }
 
@@ -97,6 +101,10 @@ func transact(c net.Conn, kind string, data string) error {
 	n, err := bufio.NewReader(conn).Read(buf)
 	if err != nil {
 		return err
+	}
+	if strings.HasPrefix(string(buf[:n]), errPrefix) {
+		fmt.Fprintf(os.Stderr, "%s\n", buf[:n])
+		return nil
 	}
 	fmt.Fprintf(os.Stdout, "%s\n", buf[:n])
 	return nil

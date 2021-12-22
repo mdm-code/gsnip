@@ -2,6 +2,7 @@ package parsing
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -14,6 +15,11 @@ const (
 	SIGNATURE
 	SCANBODY
 	ERROR
+)
+
+var (
+	ErrEmptyFile = errors.New("nothing to parse")
+	ErrLine      = errors.New("line contains an error")
 )
 
 type State uint8
@@ -57,7 +63,7 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	}
 	parsed, err := p.Run(i)
 	if err != nil {
-		return nil, err
+		return smap, err
 	}
 	for _, s := range parsed {
 		smap.Insert(s)
@@ -137,7 +143,7 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 	var line string
 	for {
 		if sm.state == ERROR {
-			return nil, fmt.Errorf("error on line: %s", line)
+			return nil, fmt.Errorf("%w: %s", ErrLine, line)
 		}
 		if line == "" {
 			if ok := s.Scan(); !ok {
@@ -148,9 +154,8 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 		callable := sm.transitions[sm.state]
 		sm.state, line = callable(sm, line)
 	}
-
 	if sm.parsed == nil {
-		return sm.parsed, fmt.Errorf("unable to parse any snippets")
+		return sm.parsed, fmt.Errorf("%w", ErrEmptyFile)
 	}
 	return sm.parsed, nil
 }

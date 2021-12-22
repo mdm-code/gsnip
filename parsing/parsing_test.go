@@ -1,6 +1,7 @@
 package parsing
 
 import (
+	"errors"
 	"io"
 	"reflect"
 	"strings"
@@ -161,5 +162,25 @@ func TestParserRun(t *testing.T) {
 		if err == nil {
 			t.Errorf("want empty slice; has %v", result)
 		}
+	}
+}
+
+func TestParserRunEmpty(t *testing.T) {
+	parser := NewParser()
+	_, err := parser.Run(strings.NewReader(``))
+	if !errors.Is(err, ErrEmptyFile) {
+		t.Errorf("expected parser to raise %w", ErrEmptyFile)
+	}
+}
+
+func TestParserRunErrLine(t *testing.T) {
+	parser := NewParser()
+	_, err := parser.Run(strings.NewReader(`startsnip
+fn main() {
+	println!("Hello, world!");
+}
+endsnip`))
+	if !errors.Is(err, ErrLine) {
+		t.Errorf("expected parser to raise %w", ErrLine)
 	}
 }

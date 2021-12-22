@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,7 +20,7 @@ type Manager struct {
 func NewManager(fh *fs.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(fh)
-	if err != nil {
+	if err != nil && !errors.Is(err, parsing.ErrEmptyFile) {
 		return newManager(nil, nil, nil), err
 	}
 	return newManager(fh, snpts, &parser), nil
@@ -29,7 +30,6 @@ func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser)
 	return &Manager{fh, snpts, p}
 }
 
-// TODO: Replace each case scope with a method.
 /* Run a server command against the snippet container.
 
 Allowed commands:
@@ -48,7 +48,7 @@ func (m *Manager) Execute(msg stream.Msg) (string, error) {
 	case stream.Fnd:
 		return m.find(string(msg.Contents()))
 	case stream.Ins:
-		return m.insert(msg)
+		return m.insert(string(msg.Contents()))
 	case stream.Del:
 		return m.delete(string(msg.Contents()))
 	default:
@@ -76,8 +76,8 @@ func (m *Manager) find(s string) (string, error) {
 	}
 }
 
-func (m *Manager) insert(msg stream.Msg) (string, error) {
-	reader := strings.NewReader(string(msg.Contents()))
+func (m *Manager) insert(c string) (string, error) {
+	reader := strings.NewReader(c)
 	parsed, err := m.p.Run(reader)
 	if err != nil {
 		return "ERROR", err

@@ -38,16 +38,17 @@ type Server interface {
 	ShutDown()
 	AwaitSignal(...os.Signal)
 	AwaitConn()
+	Log(string, interface{})
 }
 
 type UDPServer struct {
-	addr   net.UDPAddr
-	conn   *net.UDPConn
-	mngr   *manager.Manager
-	sigs   chan os.Signal
-	logr   Logger
-	interp stream.Interpreter
-	fh     *fs.FileHandler
+	addr net.UDPAddr
+	conn *net.UDPConn
+	mngr *manager.Manager
+	sigs chan os.Signal
+	logr Logger
+	itrp stream.Interpreter
+	fh   *fs.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
@@ -77,17 +78,17 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 			IP:   net.ParseIP(addr),
 			Port: port,
 		},
-		mngr:   m,
-		sigs:   make(chan os.Signal, 1),
-		logr:   NewLogger(),
-		interp: stream.NewInterpreter(),
-		fh:     fh,
+		mngr: m,
+		sigs: make(chan os.Signal, 1),
+		logr: NewLogger(),
+		itrp: stream.NewInterpreter(),
+		fh:   fh,
 	}, nil
 }
 
 func (s *UDPServer) Listen() (err error) {
 	s.conn, err = net.ListenUDP("udp", &s.addr)
-	s.logr.Log("INFO", "listening on "+s.addr.String())
+	s.Log("INFO", "listening on "+s.addr.String())
 	return
 }
 
@@ -105,10 +106,10 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 			case <-s.sigs:
 				err := s.mngr.Reload()
 				if err != nil {
-					s.logr.Log("ERROR", err)
+					s.Log("ERROR", err)
 					continue
 				}
-				s.logr.Log("INFO", "reloaded snippet source file")
+				s.Log("INFO", "reloaded snippet source file")
 			}
 		}
 	}()
@@ -120,32 +121,32 @@ func (s *UDPServer) AwaitConn() {
 		buff := make([]byte, 2048)
 		length, respAddr, err := s.conn.ReadFromUDP(buff)
 		if err != nil {
-			s.logr.Log("INFO", err)
+			s.Log("INFO", err)
 			continue
 		}
-		s.logr.Log("INFO", fmt.Sprintf("read %s from %v", buff, respAddr))
+		s.Log("INFO", fmt.Sprintf("read %s from %v", buff, respAddr))
 		go s.respond(respAddr, buff[:length])
 	}
 }
 
 func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	msg := s.interp.Eval(buff)
+	msg := s.itrp.Eval(buff)
 	switch msg.T() {
 	case stream.Rld:
 		s.sigs <- syscall.SIGHUP
 		_, err := s.conn.WriteToUDP([]byte(""), addr)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			return
 		}
 		return
 	default:
 		resp, err := s.mngr.Execute(msg)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)
 			if err != nil {
-				s.logr.Log("ERROR", err)
+				s.Log("ERROR", err)
 				return
 			}
 			return
@@ -153,9 +154,13 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 		outMsg := []byte(resp)
 		_, err = s.conn.WriteToUDP(outMsg, addr)
 		if err != nil {
-			s.logr.Log("ERROR", err)
+			s.Log("ERROR", err)
 			return
 		}
-		s.logr.Log("INFO", "write successful")
+		s.Log("INFO", "write successful")
 	}
+}
+
+func (s *UDPServer) Log(level string, msg interface{}) {
+	s.logr.Log(level, msg)
 }

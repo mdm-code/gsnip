@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mdm-code/gsnip/fs"
@@ -8,9 +9,6 @@ import (
 	"github.com/mdm-code/gsnip/snippets"
 	"github.com/mdm-code/gsnip/stream"
 )
-
-// NOTE: Manager.list and Manager.delete are hard to test because
-//       they reference an underlying file object.
 
 var c snippets.Container
 var p parsing.Parser
@@ -102,5 +100,45 @@ func TestExecuteFindFails(t *testing.T) {
 	result, err := m.find("non-existent")
 	if err == nil {
 		t.Errorf("got: %v", result)
+	}
+}
+
+func TestExecuteInsert(t *testing.T) {
+	m := newManager(&fs.FileHandler{}, c, &p)
+
+	// NOTE: Recover from nil pointer FileHandler.file.Write panic
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recovered from: ", err)
+		}
+	}()
+
+	_, err := m.insert("startsnip test \"\"\ntesting\nendsnip")
+
+	if err != nil {
+		t.Errorf("failed to insert snippet to the manager")
+	}
+
+	_, err = m.insert("bugsnig gf \"gonna fail\"\nfailing\nendbug")
+
+	if err == nil {
+		t.Errorf("managed to insert faulty-formatted snippet")
+	}
+}
+
+func TestExecuteDelete(t *testing.T) {
+	m := newManager(&fs.FileHandler{}, c, &p)
+
+	// NOTE: Recover from nil pointer FileHandler.file.Write panic
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recovered from:", err)
+		}
+	}()
+
+	_, err := m.delete("func")
+
+	if err != nil {
+		t.Error("failed to delete a snippet: ", err)
 	}
 }

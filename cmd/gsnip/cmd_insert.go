@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"net"
+	"os"
+	"strings"
 
 	"github.com/mdm-code/gsnip/editor"
 )
@@ -34,14 +37,28 @@ func cmdInsert(c net.Conn, args []string) error {
 }
 
 func insert() (string, error) {
-	e, err := editor.NewEditor("nvim", nil)
-	defer e.Exit()
-	if err != nil {
-		return "", err
+	if isPiped() {
+		var lines []string
+
+		s := bufio.NewScanner(os.Stdin)
+		s.Split(bufio.ScanLines)
+		for s.Scan() {
+			lines = append(lines, s.Text())
+		}
+
+		return strings.Join(lines, "\n"), nil
+	} else {
+		e, err := editor.NewEditor("nvim", nil)
+		defer e.Exit()
+
+		if err != nil {
+			return "", err
+		}
+		data, err := e.Run()
+		if err != nil {
+			return "", err
+		}
+
+		return string(data), nil
 	}
-	data, err := e.Run()
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }

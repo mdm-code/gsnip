@@ -66,8 +66,8 @@ func TestSnippetsListObj(t *testing.T) {
 	}
 	want := []Snippet{
 		{"func", "Go function", "func() {}"},
-		{"struct", "Go struct", "type struct {}"},
 		{"map", "Go map", "map[string]string"},
+		{"struct", "Go struct", "type struct {}"},
 	}
 	objects, _ := ss.ListObj()
 	for i, o := range objects {

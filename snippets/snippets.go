@@ -97,5 +97,13 @@ func (s *SnippetsMap) ListObj() (result []Snippet, err error) {
 	for _, v := range s.cntr {
 		result = append(result, v)
 	}
+	result = sorted(result)
 	return
+}
+
+func sorted(s []Snippet) []Snippet {
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].Name < s[j].Name
+	})
+	return s
 }

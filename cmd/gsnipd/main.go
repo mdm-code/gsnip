@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"syscall"
 
 	"github.com/mdm-code/gsnip/server"
@@ -35,6 +36,7 @@ func main() {
 	}
 
 	s, err := server.NewServer("udp", addr, port, file)
+	defer s.ShutDown()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gsnipd ERROR: %s", err)
@@ -42,8 +44,14 @@ func main() {
 	}
 
 	s.Log("INFO", "reading source file: "+file)
-	s.Listen()
-	defer s.ShutDown()
+	err = s.Listen()
+	if err != nil {
+		s.Log(
+			"ERROR",
+			fmt.Sprintf("UDP address taken: %s:%s", addr, strconv.Itoa(port)),
+		)
+		os.Exit(2)
+	}
 	s.AwaitSignal(syscall.SIGHUP)
 	s.AwaitConn()
 }

@@ -88,6 +88,9 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 
 func (s *UDPServer) Listen() (err error) {
 	s.conn, err = net.ListenUDP("udp", &s.addr)
+	if err != nil {
+		return err
+	}
 	s.Log("INFO", "listening on "+s.addr.String())
 	return
 }

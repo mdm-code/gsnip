@@ -51,10 +51,10 @@ type UnixServer struct {
 	fileHandler *fs.FileHandler
 }
 
-func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {
+func NewServer(ntwrk string, addr string, fname string) (Server, error) {
 	switch ntwrk {
-	case "udp":
-		srv, err := NewUDPServer(addr, port, fname)
+	case "unix":
+		srv, err := NewUnixServer(addr, fname)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func NewServer(ntwrk string, addr string, port int, fname string) (Server, error
 	}
 }
 
-func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
+func NewUnixServer(sock string, fname string) (*UnixServer, error) {
 	fh, err := fs.NewFileHandler(fname, fs.Perm)
 	if err != nil {
 		return nil, err
@@ -73,16 +73,13 @@ func NewUDPServer(addr string, port int, fname string) (*UDPServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &UDPServer{
-		addr: net.UDPAddr{
-			IP:   net.ParseIP(addr),
-			Port: port,
-		},
-		mngr: m,
-		sigs: make(chan os.Signal, 1),
-		logr: NewLogger(),
-		itrp: stream.NewInterpreter(),
-		fh:   fh,
+	return &UnixServer{
+		socket:      sock,
+		manager:     m,
+		signals:     make(chan os.Signal, 1),
+		logger:      NewLogger(),
+		interpreter: stream.NewInterpreter(),
+		fileHandler: fh,
 	}, nil
 }
 

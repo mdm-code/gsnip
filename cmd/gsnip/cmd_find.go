@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
-	"net"
+	"io"
 	"os"
 )
 
@@ -18,7 +18,7 @@ func init() {
 	)
 }
 
-func cmdFind(c net.Conn, args []string) error {
+func cmdFind(args []string) error {
 	fs := flag.NewFlagSet("find", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
@@ -35,8 +35,8 @@ func cmdFind(c net.Conn, args []string) error {
 		}
 	}
 	for _, p := range params {
-		err := transact(c, "@FND", p)
-		if err != nil {
+		err := transact("@FND", p)
+		if err != nil && err != io.EOF {
 			return err
 		}
 	}

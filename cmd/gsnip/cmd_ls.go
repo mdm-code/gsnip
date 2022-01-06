@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"net"
 )
 
 func init() {
@@ -16,14 +15,14 @@ func init() {
 	)
 }
 
-func cmdLs(c net.Conn, args []string) error {
+func cmdLs(args []string) error {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
 		return err
 	}
 	args = fs.Args()
-	err = transact(c, "@LST", "")
+	err = transact("@LST", "")
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"flag"
-	"net"
 	"os"
 	"strings"
 
@@ -21,7 +20,7 @@ func init() {
 	)
 }
 
-func cmdInsert(c net.Conn, args []string) error {
+func cmdInsert(args []string) error {
 	fs := flag.NewFlagSet("insert", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
@@ -32,7 +31,7 @@ func cmdInsert(c net.Conn, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = transact(c, "@INS", data)
+	err = transact("@INS", data)
 	return err
 }
 

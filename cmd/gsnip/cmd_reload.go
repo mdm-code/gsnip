@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"net"
 )
 
 func init() {
@@ -16,14 +15,14 @@ func init() {
 	)
 }
 
-func cmdReload(c net.Conn, args []string) error {
+func cmdReload(args []string) error {
 	fs := flag.NewFlagSet("reload", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
 		return err
 	}
 	args = fs.Args()
-	err = transact(c, "@RLD", "")
+	err = transact("@RLD", "")
 	if err != nil {
 		return err
 	}

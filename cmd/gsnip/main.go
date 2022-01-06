@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -11,14 +12,13 @@ import (
 
 var (
 	sock string
-	conn net.Conn
 )
 
 var errPrefix string = "ERROR"
 
 type cmd struct {
 	name    string
-	fn      func(net.Conn, []string) error
+	fn      func([]string) error
 	desc    string
 	aliases []string
 }
@@ -41,15 +41,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err = net.Dial("unix", sock)
-	defer conn.Close()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
-		os.Exit(1)
-	}
-
-	err = dispatchCmd(conn, args)
-	if err != nil {
+	err = dispatchCmd(args)
+	if err != nil && err != io.EOF {
 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
 		os.Exit(1)
 	}
@@ -76,12 +69,12 @@ func parseArgs() ([]string, error) {
 	return args, nil
 }
 
-func dispatchCmd(c net.Conn, args []string) error {
+func dispatchCmd(args []string) error {
 	if len(args) < 1 {
 		return nil
 	}
 	if cmd, ok := cmdMap[args[0]]; ok {
-		err := cmd.fn(c, args[1:])
+		err := cmd.fn(args[1:])
 		if err != nil {
 			return err
 		}
@@ -90,9 +83,12 @@ func dispatchCmd(c net.Conn, args []string) error {
 	return fmt.Errorf("command not found: %s", args[0])
 }
 
-func transact(c net.Conn, kind string, data string) error {
+func transact(kind string, data string) error {
+	conn, err := net.Dial("unix", sock)
+	defer conn.Close()
+
 	buf := make([]byte, 4096)
-	_, err := fmt.Fprintf(conn, kind+" "+data)
+	_, err = fmt.Fprintf(conn, kind+" "+data)
 	if err != nil {
 		return err
 	}

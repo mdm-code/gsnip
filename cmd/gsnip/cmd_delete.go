@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
-	"net"
+	"io"
 	"os"
 )
 
@@ -18,7 +18,7 @@ func init() {
 	)
 }
 
-func cmdDel(c net.Conn, args []string) error {
+func cmdDel(args []string) error {
 	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
 	err := fs.Parse(args)
 	if err != nil {
@@ -35,8 +35,8 @@ func cmdDel(c net.Conn, args []string) error {
 		}
 	}
 	for _, n := range names {
-		err := transact(c, "@DEL", n)
-		if err != nil {
+		err := transact("@DEL", n)
+		if err != nil && err != io.EOF {
 			return err
 		}
 	}

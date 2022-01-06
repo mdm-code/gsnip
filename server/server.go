@@ -41,14 +41,14 @@ type Server interface {
 	Log(string, interface{})
 }
 
-type UDPServer struct {
-	addr net.UDPAddr
-	conn *net.UDPConn
-	mngr *manager.Manager
-	sigs chan os.Signal
-	logr Logger
-	itrp stream.Interpreter
-	fh   *fs.FileHandler
+type UnixServer struct {
+	socket      string
+	listener    net.Listener
+	manager     *manager.Manager
+	signals     chan os.Signal
+	logger      Logger
+	interpreter stream.Interpreter
+	fileHandler *fs.FileHandler
 }
 
 func NewServer(ntwrk string, addr string, port int, fname string) (Server, error) {

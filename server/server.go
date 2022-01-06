@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -83,28 +84,28 @@ func NewUnixServer(sock string, fname string) (*UnixServer, error) {
 	}, nil
 }
 
-func (s *UDPServer) Listen() (err error) {
-	s.conn, err = net.ListenUDP("udp", &s.addr)
+func (s *UnixServer) Listen() (err error) {
+	s.listener, err = net.Listen("unix", s.socket)
 	if err != nil {
 		return err
 	}
-	s.Log("INFO", "listening on "+s.addr.String())
+	s.Log("INFO", "listening on "+s.socket)
 	return
 }
 
-func (s *UDPServer) ShutDown() {
+func (s *UnixServer) ShutDown() {
 	// NOTE: file handler closes down the moment the server is closed
-	s.fh.Close()
-	s.conn.Close()
+	s.fileHandler.Close()
+	s.listener.Close()
 }
 
-func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
-	signal.Notify(s.sigs, sig...)
+func (s *UnixServer) AwaitSignal(sig ...os.Signal) {
+	signal.Notify(s.signals, sig...)
 	go func() {
 		for {
 			select {
-			case <-s.sigs:
-				err := s.mngr.Reload()
+			case <-s.signals:
+				err := s.manager.Reload()
 				if err != nil {
 					s.Log("ERROR", err)
 					continue
@@ -116,35 +117,53 @@ func (s *UDPServer) AwaitSignal(sig ...os.Signal) {
 }
 
 // Await for incoming connections. This is a blocking function.
-func (s *UDPServer) AwaitConn() {
+func (s *UnixServer) AwaitConn() {
 	for {
-		buff := make([]byte, 2048)
-		length, respAddr, err := s.conn.ReadFromUDP(buff)
+		conn, err := s.listener.Accept()
 		if err != nil {
 			s.Log("INFO", err)
 			continue
 		}
-		s.Log("INFO", fmt.Sprintf("read %s from %v", buff, respAddr))
-		go s.respond(respAddr, buff[:length])
+
+		buff := make([]byte, 2048)
+
+		length, err := conn.Read(buff)
+		if err != nil {
+			if err == io.EOF {
+				s.Log("INFO", "client sent EOF")
+				continue
+			}
+			s.Log("INFO", err)
+			continue
+		}
+
+		s.Log(
+			"INFO",
+			fmt.Sprintf("read %s from %v", buff, conn.RemoteAddr().Network()),
+		)
+		go s.respond(conn, buff[:length])
 	}
 }
 
-func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
-	msg := s.itrp.Eval(buff)
+func (s *UnixServer) respond(conn net.Conn, buff []byte) {
+	defer conn.Close()
+
+	msg := s.interpreter.Eval(buff)
+
 	switch msg.T() {
 	case stream.Rld:
-		s.sigs <- syscall.SIGHUP
-		_, err := s.conn.WriteToUDP([]byte(""), addr)
+		s.signals <- syscall.SIGHUP
+		_, err := conn.Write([]byte(""))
 		if err != nil {
 			s.Log("ERROR", err)
 			return
 		}
 		return
 	default:
-		resp, err := s.mngr.Execute(msg)
+		resp, err := s.manager.Execute(msg)
 		if err != nil {
 			s.Log("ERROR", err)
-			_, err = s.conn.WriteToUDP([]byte("ERROR"), addr)
+			_, err = conn.Write([]byte("ERROR"))
 			if err != nil {
 				s.Log("ERROR", err)
 				return
@@ -152,7 +171,7 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 			return
 		}
 		outMsg := []byte(resp)
-		_, err = s.conn.WriteToUDP(outMsg, addr)
+		_, err = conn.Write(outMsg)
 		if err != nil {
 			s.Log("ERROR", err)
 			return
@@ -161,6 +180,6 @@ func (s *UDPServer) respond(addr *net.UDPAddr, buff []byte) {
 	}
 }
 
-func (s *UDPServer) Log(level string, msg interface{}) {
-	s.logr.Log(level, msg)
+func (s *UnixServer) Log(level string, msg interface{}) {
+	s.logger.Log(level, msg)
 }

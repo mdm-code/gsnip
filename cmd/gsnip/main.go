@@ -10,8 +10,7 @@ import (
 )
 
 var (
-	addr string
-	port string
+	sock string
 	conn net.Conn
 )
 
@@ -42,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err = net.Dial("udp", addr+":"+port)
+	conn, err = net.Dial("unix", sock)
 	defer conn.Close()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "gsnip ERROR: %s\n", err)
@@ -58,8 +57,7 @@ func main() {
 
 func parseArgs() ([]string, error) {
 	fs := flag.NewFlagSet("gsnip", flag.ContinueOnError)
-	fs.StringVar(&addr, "addr", "127.0.0.1", "server address")
-	fs.StringVar(&port, "port", "7862", "server port")
+	fs.StringVar(&sock, "sock", "/tmp/gsnip.sock", "UDS server socket name")
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Global options:\n")

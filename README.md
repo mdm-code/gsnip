@@ -5,16 +5,17 @@
 [![Action Status](https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg)](https://github.com/mdm-code/gsnip/actions)
 
 This my personal snippet manager. It lets you find, insert, delete and list out
-snippets stored in a text file and written with straightforward, I believe,
+all snippets stored in a text file and written with straightforward, I believe,
 syntax rules. My goal was to keep the program as simple as possible: it scans
 the source file with snippets and offers an interface to interact with it.
 
-There are two parts of the workflow: one, `gsnipd`, a UDP-based server
-handling connections, and `gsnip`, which is the client that relies on `FD0` or
-`SDTIN` to message the server.
+There are two parts of the workflow: one, `gsnipd`, a server running on Unix
+Domain Socket handling connections, and `gsnip`, which is the client that
+relies on `FD0` or `SDTIN` and simple sub-commands to send messages to the
+server.
 
 `gsnipd`, `gsnip` and all its subcommands print out useful information with
-`--help`.
+`-h|--help`.
 
 First, you want to spin up the server with either of these commands:
 
@@ -22,6 +23,9 @@ First, you want to spin up the server with either of these commands:
 gsnipd
 gsnipd &>/dev/null &
 ```
+
+You can enable it as a daemon in systemd or launchd on MacOS so that it
+runs on startup.
 
 The source file used to store snippets can be passed as an argument to the
 `gsnipd` program. If it isn't, the program will create an empty file at the
@@ -73,7 +77,8 @@ sending `SIGHUP` to the process using `kill -1 [pid]`. The latter is annoying
 because you have to find the process id with `ps` before sending the signal.
 Another way would be to write PID to a known file that the client could access.
 
-There are five headers that the `gsnipd` server can understand:
+For the sake of clarity, there are five headers that a `gsnipd` server can
+understand:
 
 - @LST
 - @RLD
@@ -106,7 +111,7 @@ to be respected:
 
 1. `NAME` could be anything so long as it does not contain any white space
    characters.
-2. `NAME` must not be a reserved `gsnip` command (e.g., `@LIST` would list out
+2. `NAME` must not be a reserved `gsnip` command (e.g., `@LST` would list out
    all the snippets found in the file).
 3. `COMMENT` should always be enclosed in double quotes.
 4. Finally, `BODY` can be pretty much anything.

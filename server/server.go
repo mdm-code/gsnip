@@ -102,6 +102,8 @@ func (s *UnixServer) ShutDown() {
 
 func (s *UnixServer) AwaitSignal(sig ...os.Signal) {
 	signal.Notify(s.signals, sig...)
+	// NOTE: Goroutine runs until the program terminates. There is no reason
+	// to call close(s.signals) to explicitly relieve the scheduler.
 	go func() {
 		for {
 			select {

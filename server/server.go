@@ -17,21 +17,22 @@ type Logger interface {
 	Log(string, interface{})
 }
 
-type LogMixin struct {
-	pName string
-	FD    *os.File
-}
+type LoggerAdapter func(string, interface{})
 
 func NewLogger() Logger {
 	// NOTE: Add new loggers here
 	switch {
 	default:
-		return &LogMixin{pName: "gsnipd", FD: os.Stderr}
+		return LoggerAdapter(toStderr)
 	}
 }
 
-func (l *LogMixin) Log(level string, msg interface{}) {
-	fmt.Fprintf(l.FD, "%s %s: %s\n", l.pName, level, msg)
+func (l LoggerAdapter) Log(level string, msg interface{}) {
+	l(level, msg)
+}
+
+func toStderr(level string, msg interface{}) {
+	fmt.Fprintf(os.Stderr, "%s %s: %s\n", "gsnipd", level, msg)
 }
 
 type Server interface {

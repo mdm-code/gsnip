@@ -129,7 +129,8 @@ fields. There isn't really more to it---it does the same work as a flat file.
 
 Consult `Makefile`; there is an `install` directive that you can call with
 `make install`, and that's pretty much it when it comes to the installation of
-this Go program.
+this Go program. Make sure that the directory where it's installed is on your
+$PATH.
 
 
 ## Testing
@@ -140,3 +141,10 @@ am really not worried about the coverage at this stage; the program is way to
 simple and test as they currently are, they cover all of the functional
 bottlenecks of the program. However, if you want to peek at the coverage, type
 `make cover` and the `make clean` once you're done.
+
+Don't forget to install `golint` before you run the test command from the 
+Makefile:
+
+```sh
+go get -u golang.org/x/lint/golint
+```

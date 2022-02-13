@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -16,11 +17,10 @@ type editor struct {
 // NewEditor is used to create a new text editor that is capable of editing the
 // underlying text file.
 //
-// The function takes the prog argument, which can be `vim` or `nano`, for instance.
-// The second argument, fname, is a pointer to a string. A non-empty string would
-// mean that a permanent file will be created. A nil pointer would mean that a
-// temporary file will be created.
-func NewEditor(prog string, fname *string) (*editor, error) {
+// Fname, is a pointer to a string. A non-empty string would mean that a
+// permanent file will be created. A nil pointer would mean that a temporary
+// file will be created.
+func NewEditor(fname *string) (*editor, error) {
 	var fh *fs.FileHandler
 	var err error
 	if fname == nil {
@@ -31,6 +31,12 @@ func NewEditor(prog string, fname *string) (*editor, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	prog, ok := os.LookupEnv("EDITOR")
+	if !ok {
+		return nil, fmt.Errorf("$EDITOR is not set.")
+	}
+
 	e := editor{fh, prog}
 	return &e, nil
 }

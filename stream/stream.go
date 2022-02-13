@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-type dep int8
+type dep uint8
 
 const (
 	unbound dep = iota
@@ -12,7 +12,7 @@ const (
 	mngr
 )
 
-type kind int8
+type kind uint8
 
 const (
 	undef kind = iota

@@ -47,12 +47,12 @@ func insert() (string, error) {
 
 		return strings.Join(lines, "\n"), nil
 	} else {
-		e, err := editor.NewEditor("nvim", nil)
-		defer e.Exit()
-
+		e, err := editor.NewEditor(nil)
 		if err != nil {
 			return "", err
 		}
+		defer e.Exit()
+
 		data, err := e.Run()
 		if err != nil {
 			return "", err

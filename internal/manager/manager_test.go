@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mdm-code/gsnip/fs"
-	"github.com/mdm-code/gsnip/parsing"
-	"github.com/mdm-code/gsnip/snippets"
-	"github.com/mdm-code/gsnip/stream"
+	"github.com/mdm-code/gsnip/internal/fs"
+	"github.com/mdm-code/gsnip/internal/parsing"
+	"github.com/mdm-code/gsnip/internal/snippets"
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
 var c snippets.Container

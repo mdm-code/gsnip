@@ -36,7 +36,7 @@ func NewEditor(fname *string) (*Editor, error) {
 
 	prog, ok := os.LookupEnv("EDITOR")
 	if !ok {
-		return nil, fmt.Errorf("$EDITOR is not set.")
+		return nil, fmt.Errorf("$EDITOR is not set")
 	}
 
 	e := Editor{fh, prog}

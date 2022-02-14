@@ -29,7 +29,7 @@ mkbin:
 	mkdir -p bin
 
 .PHONY: build
-build: test mkdir
+build: test mkbin
 	$(GO) build $(GOFLAGS) -o $(DEV_BIN)/gsnip cmd/gsnip/main.go
 	$(GO) build $(GOFLAGS) -o $(DEV_BIN)/gsnipd cmd/gsnipd/main.go
 

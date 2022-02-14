@@ -9,26 +9,29 @@ import (
 )
 
 const (
+	// Perm specifies a permanent file.
 	Perm FType = iota
+	// Temp specifies a temporary file.
 	Temp
 )
 
+// FType represents a file type.
 type FType uint8
 
-type Truncator interface {
+type truncator interface {
 	Truncate(size int64) error
 }
 
-type ReadWriteSeekCloserTruncator interface {
+type readWriteSeekCloseTruncator interface {
 	io.Reader
 	io.Writer
 	io.Closer
 	io.Seeker
-	Truncator
+	truncator
 }
 
 type opener interface {
-	open() (ReadWriteSeekCloserTruncator, error)
+	open() (readWriteSeekCloseTruncator, error)
 	name() string
 }
 
@@ -40,7 +43,7 @@ type openTemp struct {
 	fname string
 }
 
-func (o *openPerm) open() (ReadWriteSeekCloserTruncator, error) {
+func (o *openPerm) open() (readWriteSeekCloseTruncator, error) {
 	f, err := os.OpenFile(o.fname, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
@@ -50,7 +53,7 @@ func (o *openPerm) open() (ReadWriteSeekCloserTruncator, error) {
 
 func (o *openPerm) name() string { return o.fname }
 
-func (o *openTemp) open() (ReadWriteSeekCloserTruncator, error) {
+func (o *openTemp) open() (readWriteSeekCloseTruncator, error) {
 	var err error
 	var f *os.File
 
@@ -68,12 +71,16 @@ func (o *openTemp) open() (ReadWriteSeekCloserTruncator, error) {
 
 func (o *openTemp) name() string { return o.fname }
 
+// FileHandler defines a file handle structure responsible for controlling
+// file access and operations.
 type FileHandler struct {
-	file  ReadWriteSeekCloserTruncator
+	file  readWriteSeekCloseTruncator
 	mutex *sync.Mutex
 	opener
 }
 
+// NewFileHandler returns a pointer to the file handler which opens either a
+// temporary or a permanent file underneath.
 func NewFileHandler(fname string, ft FType) (*FileHandler, error) {
 	var o opener
 	switch ft {
@@ -92,40 +99,49 @@ func NewFileHandler(fname string, ft FType) (*FileHandler, error) {
 	return h, nil
 }
 
+// Open opens a file.
 func (h *FileHandler) Open() (err error) {
 	h.file, err = h.open()
 	return
 }
 
+// Read reads a file.
 func (h *FileHandler) Read(p []byte) (int, error) {
 	return h.file.Read(p)
 }
 
+// Write writes bytes to a file.
 func (h *FileHandler) Write(p []byte) (int, error) {
 	return h.file.Write(p)
 }
 
+// Close closes down a file.
 func (h *FileHandler) Close() error {
 	return h.file.Close()
 }
 
+// Seek seeks to an offset in a file.
 func (h *FileHandler) Seek(offset int64, whence int) (int64, error) {
 	return h.file.Seek(offset, whence)
 }
 
+// Truncate truncates a file to size.
 func (h *FileHandler) Truncate(size int64) (err error) {
-	h.file.Truncate(0)
+	h.file.Truncate(size)
 	return
 }
 
+// Lock locks up the file access.
 func (h *FileHandler) Lock() {
 	h.mutex.Lock()
 }
 
+// Unlock unlocks access to a file.
 func (h *FileHandler) Unlock() {
 	h.mutex.Unlock()
 }
 
+// Reload reloads a file.
 func (h *FileHandler) Reload() error {
 	err := h.Close()
 	if err != nil {
@@ -136,11 +152,13 @@ func (h *FileHandler) Reload() error {
 	return err
 }
 
+// Remove attempts to remove a file from the file system.
 func (h *FileHandler) Remove() error {
 	err := os.Remove(h.Name())
 	return err
 }
 
+// Name returns the name of the file.
 func (h *FileHandler) Name() string {
 	return h.name()
 }

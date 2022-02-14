@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-type dep int8
+type dep uint8
 
 const (
 	unbound dep = iota
@@ -12,18 +12,25 @@ const (
 	mngr
 )
 
-type kind int8
+// Kind labels the allowed operation.
+type Kind int8
 
 const (
-	undef kind = iota
+	// Undef represents an undefined operation.
+	Undef Kind = iota
+	// Fnd represents the find operation.
 	Fnd
+	// Lst represents the list operation.
 	Lst
+	// Ins represents the insert operation.
 	Ins
+	// Del represents the delete operation.
 	Del
+	// Rld represents the reload operation.
 	Rld
 )
 
-var kindToStr = map[kind]string{
+var kindToStr = map[Kind]string{
 	Fnd: "@FND",
 	Lst: "@LST",
 	Ins: "@INS",
@@ -31,7 +38,7 @@ var kindToStr = map[kind]string{
 	Rld: "@RLD",
 }
 
-var strToKind = map[string]kind{
+var strToKind = map[string]Kind{
 	"@FND": Fnd,
 	"@LST": Lst,
 	"@INS": Ins,
@@ -41,30 +48,35 @@ var strToKind = map[string]kind{
 
 const hSize = 4
 
+// Msg represents the evaluated client message.
 type Msg struct {
-	knd  kind
+	knd  Kind
 	cmd  bool
 	ref  dep
 	body []byte
 }
 
-// Tell the type of the message.
-func (m Msg) T() kind {
+// T tells the type of the message.
+func (m Msg) T() Kind {
 	return m.knd
 }
 
+// TString return the type of the operation as a string.
 func (m Msg) TString() string {
 	return kindToStr[m.knd]
 }
 
+// TByte returns the type of the operation as a slice of bytes.
 func (m Msg) TByte() []byte {
 	return []byte(m.TString())
 }
 
+// Contents returns the body of the message.
 func (m Msg) Contents() []byte {
 	return m.body
 }
 
+// IsUnbound tells whether the message is unbound.
 func (m Msg) IsUnbound() bool {
 	if m.ref == unbound {
 		return true
@@ -72,16 +84,19 @@ func (m Msg) IsUnbound() bool {
 	return false
 }
 
+// Interpreter interprets the message received from the client.
 type Interpreter struct {
-	kmap map[string]kind
+	kmap map[string]Kind
 }
 
+// NewInterpreter creates a new instance of the Interpreter type.
 func NewInterpreter() Interpreter {
 	return Interpreter{
 		kmap: strToKind,
 	}
 }
 
+// Eval evalues the message sent into an appropriate Msg type.
 func (i Interpreter) Eval(b []byte) Msg {
 	b = bytes.TrimSpace(b)
 
@@ -99,6 +114,6 @@ func (i Interpreter) Eval(b []byte) Msg {
 	case Rld:
 		return Msg{knd: k, cmd: true, ref: srvr, body: body}
 	default:
-		return Msg{knd: undef, cmd: false, ref: unbound}
+		return Msg{knd: Undef, cmd: false, ref: unbound}
 	}
 }

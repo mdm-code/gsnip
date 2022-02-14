@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+// Container provides an interface for a type handling snippet storage.
 type Container interface {
 	Insert(Snippet) error
 	Find(string) (Snippet, error)
@@ -14,41 +15,46 @@ type Container interface {
 	ListObj() ([]Snippet, error)
 }
 
+// Snippet carries information about a single code snippet.
 type Snippet struct {
 	Name string
 	Desc string
 	Body string
 }
 
-// In-file snippet text representation.
+// Repr provides an in-file snippet text representation.
 func (s Snippet) Repr() string {
 	return fmt.Sprintf("startsnip %s \"%s\"\n%s\nendsnip\n\n", s.Name, s.Desc, s.Body)
 }
 
-type SnippetsMap struct {
+// Map is a map-based implementation of a snippet Container.
+type Map struct {
 	cntr map[string]Snippet
 	sync.Mutex
 }
 
-// Create a fresh instance of snippets container.
+// NewSnippetsContainer creates a fresh instance of snippets container.
 //
 // Allowed types (t): map
 func NewSnippetsContainer(t string) (Container, error) {
 	switch t {
 	case "map":
-		return NewSnippetsMap(), nil
+		return NewMap(), nil
 	default:
 		return nil, fmt.Errorf("container type (%s) is not implemented", t)
 	}
 }
 
-func NewSnippetsMap() *SnippetsMap {
-	return &SnippetsMap{
+// NewMap creates an instance of the snippet container relying on a map composite
+// type.
+func NewMap() *Map {
+	return &Map{
 		cntr: make(map[string]Snippet),
 	}
 }
 
-func (s *SnippetsMap) Insert(snip Snippet) (err error) {
+// Insert inserts a snippet to the container.
+func (s *Map) Insert(snip Snippet) (err error) {
 	s.Lock()
 	defer s.Unlock()
 	if _, exists := s.cntr[snip.Name]; !exists {
@@ -60,7 +66,8 @@ func (s *SnippetsMap) Insert(snip Snippet) (err error) {
 	return
 }
 
-func (s *SnippetsMap) Find(str string) (Snippet, error) {
+// Find searches for a snippet name in the container.
+func (s *Map) Find(str string) (Snippet, error) {
 	s.Lock()
 	defer s.Unlock()
 	var snip Snippet
@@ -71,7 +78,8 @@ func (s *SnippetsMap) Find(str string) (Snippet, error) {
 	return snip, nil
 }
 
-func (s *SnippetsMap) List() ([]string, error) {
+// List lists out all stored snippet names.
+func (s *Map) List() ([]string, error) {
 	s.Lock()
 	defer s.Unlock()
 	var result []string
@@ -84,14 +92,16 @@ func (s *SnippetsMap) List() ([]string, error) {
 	return result, nil
 }
 
-func (s *SnippetsMap) Delete(key string) error {
+// Delete deletes a snippet from the container.
+func (s *Map) Delete(key string) error {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.cntr, key)
 	return nil
 }
 
-func (s *SnippetsMap) ListObj() (result []Snippet, err error) {
+// ListObj lists out all snippets stored in the container.
+func (s *Map) ListObj() (result []Snippet, err error) {
 	s.Lock()
 	defer s.Unlock()
 	for _, v := range s.cntr {

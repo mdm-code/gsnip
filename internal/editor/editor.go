@@ -1,14 +1,17 @@
 package editor
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 
-	"github.com/mdm-code/gsnip/fs"
+	"github.com/mdm-code/gsnip/internal/fs"
 )
 
-type editor struct {
+// Editor defines the structure holding a handle to a file and the name of the
+// program to open it in.
+type Editor struct {
 	handler *fs.FileHandler
 	program string
 }
@@ -16,11 +19,10 @@ type editor struct {
 // NewEditor is used to create a new text editor that is capable of editing the
 // underlying text file.
 //
-// The function takes the prog argument, which can be `vim` or `nano`, for instance.
-// The second argument, fname, is a pointer to a string. A non-empty string would
-// mean that a permanent file will be created. A nil pointer would mean that a
-// temporary file will be created.
-func NewEditor(prog string, fname *string) (*editor, error) {
+// Fname, is a pointer to a string. A non-empty string would mean that a
+// permanent file will be created. A nil pointer would mean that a temporary
+// file will be created.
+func NewEditor(fname *string) (*Editor, error) {
 	var fh *fs.FileHandler
 	var err error
 	if fname == nil {
@@ -31,12 +33,18 @@ func NewEditor(prog string, fname *string) (*editor, error) {
 	if err != nil {
 		return nil, err
 	}
-	e := editor{fh, prog}
+
+	prog, ok := os.LookupEnv("EDITOR")
+	if !ok {
+		return nil, fmt.Errorf("$EDITOR is not set")
+	}
+
+	e := Editor{fh, prog}
 	return &e, nil
 }
 
-// Open the file in the text editor.
-func (e *editor) Run() ([]byte, error) {
+// Run opens the file in the text editor.
+func (e *Editor) Run() ([]byte, error) {
 	cmd := exec.Command(e.program, e.handler.Name())
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -56,8 +64,8 @@ func (e *editor) Run() ([]byte, error) {
 	return data, nil
 }
 
-// Close and remove the file.
-func (e *editor) Exit() error {
+// Exit closes and removes the file.
+func (e *Editor) Exit() error {
 	err := e.handler.Close()
 	if err != nil {
 		return err

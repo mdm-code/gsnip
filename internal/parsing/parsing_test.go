@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mdm-code/gsnip/snippets"
+	"github.com/mdm-code/gsnip/internal/snippets"
 )
 
 var funcSnip = snippets.Snippet{

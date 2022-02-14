@@ -7,54 +7,56 @@ import (
 	"io"
 	"strings"
 
-	"github.com/mdm-code/gsnip/snippets"
+	"github.com/mdm-code/gsnip/internal/snippets"
 )
 
 const (
-	SCANNING State = iota
-	SIGNATURE
-	SCANBODY
-	ERROR
+	scanning state = iota
+	signature
+	scanBody
+	errored
 )
 
 var (
+	// ErrEmptyFile is raised when file is not parsed successfully.
 	ErrEmptyFile = errors.New("nothing to parse")
-	ErrLine      = errors.New("line contains an error")
+	// ErrLine is raised when there is an error on a line.
+	ErrLine = errors.New("line contains an error")
 )
 
-type State uint8
+type state uint8
 
-type StateMachine struct {
-	transitions map[State]func(*StateMachine, string) (State, string)
+type stateMachine struct {
+	transitions map[state]func(*stateMachine, string) (state, string)
 	parsed      []snippets.Snippet
 	body        []string
-	state       State
+	state       state
 }
 
 // Parser parses input files with snippets.
 type Parser struct {
-	sm *StateMachine
+	sm *stateMachine
 }
 
-func newStateMachine() *StateMachine {
-	return &StateMachine{
-		transitions: map[State]func(*StateMachine, string) (State, string){
-			SCANNING:  (*StateMachine).scanLine,
-			SIGNATURE: (*StateMachine).readSignature,
-			SCANBODY:  (*StateMachine).scanBody,
+func newStateMachine() *stateMachine {
+	return &stateMachine{
+		transitions: map[state]func(*stateMachine, string) (state, string){
+			scanning:  (*stateMachine).scanLine,
+			signature: (*stateMachine).readSignature,
+			scanBody:  (*stateMachine).scanBody,
 		},
-		state: SCANNING,
+		state: scanning,
 	}
 }
 
-// NewParser creates a fresh new parser.
+// NewParser creates a new parser.
 func NewParser() Parser {
 	return Parser{
 		sm: newStateMachine(),
 	}
 }
 
-// Parse file with snippets. The result is a map
+// Parse parses file with snippets. The result is a map
 // of of snippets with name as key and body as value.
 func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	smap, err := snippets.NewSnippetsContainer("map")
@@ -71,26 +73,27 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	return smap, nil
 }
 
+// Run runs the parser against input text.
 func (p *Parser) Run(i io.Reader) ([]snippets.Snippet, error) {
 	result, err := p.sm.run(i)
 	return result, err
 }
 
-func (sm *StateMachine) scanLine(line string) (State, string) {
+func (sm *stateMachine) scanLine(line string) (state, string) {
 	if l := strings.TrimSpace(line); strings.HasPrefix(l, "startsnip") {
-		return SIGNATURE, line
+		return signature, line
 	}
-	return SCANNING, ""
+	return scanning, ""
 }
 
-func (sm *StateMachine) readSignature(line string) (State, string) {
+func (sm *stateMachine) readSignature(line string) (state, string) {
 	elems, ok := splitSignature(line)
 	if !ok {
-		return ERROR, line
+		return errored, line
 	}
 	snip := snippets.Snippet{Name: elems[0], Desc: elems[1]}
 	sm.parsed = append(sm.parsed, snip)
-	return SCANBODY, ""
+	return scanBody, ""
 }
 
 func splitSignature(s string) ([]string, bool) {
@@ -126,23 +129,23 @@ func takeBetween(s string, delim rune) (string, bool) {
 	return result, true
 }
 
-func (sm *StateMachine) scanBody(line string) (State, string) {
+func (sm *stateMachine) scanBody(line string) (state, string) {
 	if l := strings.TrimSpace(line); strings.HasPrefix(l, "endsnip") {
 		sm.parsed[len(sm.parsed)-1].Body = strings.Join(sm.body, "\n")
 		sm.body = sm.body[:0]
-		return SCANNING, ""
+		return scanning, ""
 	}
 	sm.body = append(sm.body, line)
-	return SCANBODY, ""
+	return scanBody, ""
 }
 
-func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
+func (sm *stateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 	s := bufio.NewScanner(f)
 	sm.reset()
 
 	var line string
 	for {
-		if sm.state == ERROR {
+		if sm.state == errored {
 			return nil, fmt.Errorf("%w: %s", ErrLine, line)
 		}
 		if line == "" {
@@ -161,8 +164,8 @@ func (sm *StateMachine) run(f io.Reader) ([]snippets.Snippet, error) {
 }
 
 // Reset the state of the object.
-func (sm *StateMachine) reset() {
+func (sm *stateMachine) reset() {
 	sm.parsed = nil
 	sm.body = nil
-	sm.state = SCANNING
+	sm.state = scanning
 }

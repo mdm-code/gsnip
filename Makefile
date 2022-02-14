@@ -1,37 +1,45 @@
 GO=go
 GOFLAGS=-race
 DEV_BIN=bin
+COV_PROFILE=cp.out
 
-all: test build clean
+.DEFAULT_GOAL := build
 
-mkbin:
-	mkdir -p bin
+.PHONY: fmt
+	$(GO) fmt ./...
 
-.PHONY: build
-build:
-	go build $(GOFLAGS) -o $(DEV_BIN)/gsnip cmd/gsnip/main.go
-	go build $(GOFLAGS) -o $(DEV_BIN)/gsnipd cmd/gsnipd/main.go
+.PHONY: vet
+vet: fmt
+	$(GO) vet ./...
 
-.PHONY: run
-run: build
-	./$(DEV_BIN)/gsnipd &>/dev/null &
-	echo pprog | ./$(DEV_BIN)/gsnip
+.PHONY: lint
+lint: vet
+	golint -set_exit_status=1 ./...
 
 .PHONY: test
-test:
+test: lint
 	$(GO) clean -testcache
 	$(GO) test ./... -v
 
 .PHONY: install
 install: test
-	go install ./...
+	$(GO) install ./...
+
+mkbin:
+	mkdir -p bin
+
+.PHONY: build
+build: test mkbin
+	$(GO) build $(GOFLAGS) -o $(DEV_BIN)/gsnip cmd/gsnip/main.go
+	$(GO) build $(GOFLAGS) -o $(DEV_BIN)/gsnipd cmd/gsnipd/main.go
 
 .PHONY: cover
 cover:
-	go test -coverprofile=cp.out ./...
-	go tool cover -html=cp.out
+	$(GO) test -coverprofile=$(COV_PROFILE) -covermode=atomic ./...
+	$(GO) tool cover -html=$(COV_PROFILE)
 
 .PHONY: clean
 clean:
+	$(GO) clean github.com/mdm-code/gsnip/...
 	$(GO) clean -testcache
-	rm -f cp.out
+	rm -f $(COV_PROFILE)

@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"syscall"
 
-	"github.com/mdm-code/gsnip/server"
-	"github.com/mdm-code/gsnip/xdg"
+	"github.com/mdm-code/gsnip/internal/server"
+	"github.com/mdm-code/xdg"
 )
 
 var (
@@ -18,22 +17,23 @@ var (
 )
 
 func main() {
-	flag.StringVar(&sock, "sock", "/tmp/gsnip.sock", "UDS server socket name")
+	flag.StringVar(
+		&sock,
+		"sock",
+		"/tmp/gsnip.sock",
+		"UDS server socket name",
+	)
 	flag.StringVar(&file, "file", "", "snippet source file")
 	setupFlags(flag.CommandLine)
 	flag.Parse()
 
 	if file == "" {
-		dirs := xdg.Arrange()
-		dir, ok := xdg.Discover(dirs)
+		var ok bool
+		file, ok = xdg.Find(xdg.Data, "gsnip/snippets")
 		if !ok {
-			fmt.Fprintf(
-				os.Stderr,
-				"gsnipd ERROR: could not find any snippet file",
-			)
+			fmt.Fprintln(os.Stderr, "gsnipd ERROR: could not find snippet file")
 			os.Exit(1)
 		}
-		file = path.Join(dir.Item(), "snippets")
 	}
 
 	cleanup()

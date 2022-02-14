@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mdm-code/gsnip/editor"
+	"github.com/mdm-code/gsnip/internal/editor"
 )
 
 func init() {
@@ -46,18 +46,17 @@ func insert() (string, error) {
 		}
 
 		return strings.Join(lines, "\n"), nil
-	} else {
-		e, err := editor.NewEditor("nvim", nil)
-		defer e.Exit()
-
-		if err != nil {
-			return "", err
-		}
-		data, err := e.Run()
-		if err != nil {
-			return "", err
-		}
-
-		return string(data), nil
 	}
+	e, err := editor.NewEditor(nil)
+	if err != nil {
+		return "", err
+	}
+	defer e.Exit()
+
+	data, err := e.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
 }

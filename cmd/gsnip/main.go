@@ -85,6 +85,9 @@ func dispatchCmd(args []string) error {
 
 func transact(kind string, data string) error {
 	conn, err := net.Dial("unix", sock)
+	if err != nil {
+		return err
+	}
 	defer conn.Close()
 
 	buf := make([]byte, 4096)

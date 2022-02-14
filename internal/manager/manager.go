@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mdm-code/gsnip/fs"
-	"github.com/mdm-code/gsnip/parsing"
-	"github.com/mdm-code/gsnip/snippets"
-	"github.com/mdm-code/gsnip/stream"
+	"github.com/mdm-code/gsnip/internal/fs"
+	"github.com/mdm-code/gsnip/internal/parsing"
+	"github.com/mdm-code/gsnip/internal/snippets"
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
+// Manager integrates operations on snippets stored in a file.
 type Manager struct {
 	fh *fs.FileHandler
 	c  snippets.Container
 	p  *parsing.Parser
 }
 
+// NewManager creates a pointer to a Manager instance for a given file handle.
 func NewManager(fh *fs.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(fh)
@@ -30,14 +32,13 @@ func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser)
 	return &Manager{fh, snpts, p}
 }
 
-/* Run a server command against the snippet container.
-
-Allowed commands:
-	* @LST: list out all stored snippets
-	* @FND: retrieve a snippet
-	* @INS: insert a snippet to container
-	* @DEL: delete a snippet
-*/
+// Execute runs a server command against the snippet container.
+//
+// Allowed commands:
+// 	* @LST: list out all stored snippets
+// 	* @FND: retrieve a snippet
+// 	* @INS: insert a snippet to container
+// 	* @DEL: delete a snippet
 func (m *Manager) Execute(msg stream.Msg) (string, error) {
 	if msg.IsUnbound() {
 		return "", fmt.Errorf("empty strings are unbound")
@@ -69,11 +70,12 @@ func (m *Manager) list() (string, error) {
 }
 
 func (m *Manager) find(s string) (string, error) {
-	if searched, err := m.c.Find(s); err != nil {
+	var searched snippets.Snippet
+	var err error
+	if searched, err = m.c.Find(s); err != nil {
 		return "", fmt.Errorf("%s was not found", s)
-	} else {
-		return searched.Body, nil
 	}
+	return searched.Body, nil
 }
 
 func (m *Manager) insert(c string) (string, error) {

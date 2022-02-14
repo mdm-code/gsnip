@@ -56,7 +56,7 @@ endsnip`)},
 // Test whether the token is able to tell its type in all formats.
 func TestTokenTellsItsKind(t *testing.T) {
 	type wnt struct {
-		T  kind
+		T  Kind
 		Ts string
 		Tb []byte
 		bd []byte

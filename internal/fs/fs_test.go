@@ -6,7 +6,7 @@ import (
 )
 
 type mockFile struct {
-	ReadWriteSeekCloserTruncator
+	readWriteSeekCloseTruncator
 }
 
 func (m mockFile) Seek(offset int64, whence int) (int64, error) {
@@ -27,7 +27,7 @@ type mockOpener struct {
 	fname string
 }
 
-func (m *mockOpener) open() (ReadWriteSeekCloserTruncator, error) {
+func (m *mockOpener) open() (readWriteSeekCloseTruncator, error) {
 	return nil, nil
 }
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/mdm-code/gsnip/server"
+	"github.com/mdm-code/gsnip/internal/server"
 	"github.com/mdm-code/xdg"
 )
 

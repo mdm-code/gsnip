@@ -8,26 +8,26 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mdm-code/gsnip/fs"
-	"github.com/mdm-code/gsnip/manager"
-	"github.com/mdm-code/gsnip/stream"
+	"github.com/mdm-code/gsnip/internal/fs"
+	"github.com/mdm-code/gsnip/internal/manager"
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
-type Logger interface {
-	Log(string, interface{})
+type logger interface {
+	log(string, interface{})
 }
 
-type LoggerAdapter func(string, interface{})
+type loggerAdapter func(string, interface{})
 
-func NewLogger() Logger {
+func newLogger() logger {
 	// NOTE: Add new loggers here
 	switch {
 	default:
-		return LoggerAdapter(toStderr)
+		return loggerAdapter(toStderr)
 	}
 }
 
-func (l LoggerAdapter) Log(level string, msg interface{}) {
+func (l loggerAdapter) log(level string, msg interface{}) {
 	l(level, msg)
 }
 
@@ -35,6 +35,7 @@ func toStderr(level string, msg interface{}) {
 	fmt.Fprintf(os.Stderr, "%s %s: %s\n", "gsnipd", level, msg)
 }
 
+// Server specifies the functional server interface.
 type Server interface {
 	Listen() error
 	ShutDown()
@@ -43,20 +44,23 @@ type Server interface {
 	Log(string, interface{})
 }
 
-type UnixServer struct {
+// unixServer represents a server connecting over a Unix Domain Socket.
+type unixServer struct {
 	socket      string
 	listener    net.Listener
 	manager     *manager.Manager
 	signals     chan os.Signal
-	logger      Logger
+	logger      logger
 	interpreter stream.Interpreter
 	fileHandler *fs.FileHandler
 }
 
+// NewServer creates a server connecting over the specified network. The address
+// of the sever could be a file or an address with a port.
 func NewServer(ntwrk string, addr string, fname string) (Server, error) {
 	switch ntwrk {
 	case "unix":
-		srv, err := NewUnixServer(addr, fname)
+		srv, err := newUnixServer(addr, fname)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +70,7 @@ func NewServer(ntwrk string, addr string, fname string) (Server, error) {
 	}
 }
 
-func NewUnixServer(sock string, fname string) (*UnixServer, error) {
+func newUnixServer(sock string, fname string) (*unixServer, error) {
 	fh, err := fs.NewFileHandler(fname, fs.Perm)
 	if err != nil {
 		return nil, err
@@ -75,17 +79,18 @@ func NewUnixServer(sock string, fname string) (*UnixServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &UnixServer{
+	return &unixServer{
 		socket:      sock,
 		manager:     m,
 		signals:     make(chan os.Signal, 1),
-		logger:      NewLogger(),
+		logger:      newLogger(),
 		interpreter: stream.NewInterpreter(),
 		fileHandler: fh,
 	}, nil
 }
 
-func (s *UnixServer) Listen() (err error) {
+// Listen causes the server to start listening on the socket.
+func (s *unixServer) Listen() (err error) {
 	s.listener, err = net.Listen("unix", s.socket)
 	if err != nil {
 		return err
@@ -94,13 +99,16 @@ func (s *UnixServer) Listen() (err error) {
 	return
 }
 
-func (s *UnixServer) ShutDown() {
+// ShutDown closes the server down.
+func (s *unixServer) ShutDown() {
 	// NOTE: file handler closes down the moment the server is closed
 	s.fileHandler.Close()
 	s.listener.Close()
 }
 
-func (s *UnixServer) AwaitSignal(sig ...os.Signal) {
+// AwaitSignal orders the server to wait signals and call reload when one of
+// them is received.
+func (s *unixServer) AwaitSignal(sig ...os.Signal) {
 	signal.Notify(s.signals, sig...)
 	// NOTE: Goroutine runs until the program terminates. There is no reason
 	// to call close(s.signals) to explicitly relieve the scheduler.
@@ -119,8 +127,8 @@ func (s *UnixServer) AwaitSignal(sig ...os.Signal) {
 	}()
 }
 
-// Await for incoming connections. This is a blocking function.
-func (s *UnixServer) AwaitConn() {
+// AwaitConn waits for incoming connections. This is a blocking function.
+func (s *unixServer) AwaitConn() {
 	for {
 		conn, err := s.listener.Accept()
 		if err != nil {
@@ -148,7 +156,7 @@ func (s *UnixServer) AwaitConn() {
 	}
 }
 
-func (s *UnixServer) respond(conn net.Conn, buff []byte) {
+func (s *unixServer) respond(conn net.Conn, buff []byte) {
 	defer conn.Close()
 
 	msg := s.interpreter.Eval(buff)
@@ -183,6 +191,7 @@ func (s *UnixServer) respond(conn net.Conn, buff []byte) {
 	}
 }
 
-func (s *UnixServer) Log(level string, msg interface{}) {
-	s.logger.Log(level, msg)
+// Log logs the message with a provided severity level.
+func (s *unixServer) Log(level string, msg interface{}) {
+	s.logger.log(level, msg)
 }

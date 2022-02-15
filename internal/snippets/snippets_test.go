@@ -15,7 +15,7 @@ func TestSnippetRepr(t *testing.T) {
 }
 
 func TestContainerFindMethod(t *testing.T) {
-	ss := NewMap()
+	ss := newMap()
 	ss.Insert(Snippet{
 		Name: "anonfunc",
 		Desc: "anonymous function in the Go programming language",
@@ -28,7 +28,7 @@ func TestContainerFindMethod(t *testing.T) {
 }
 
 func TestSnippetsMapInsert(t *testing.T) {
-	ss := NewMap()
+	ss := newMap()
 	err := ss.Insert(Snippet{"name", "desc", "body"})
 	if err != nil {
 		t.Error("Insert() fails to insert Snippet to map")
@@ -36,7 +36,7 @@ func TestSnippetsMapInsert(t *testing.T) {
 }
 
 func TestSnippetsMapFind(t *testing.T) {
-	ss := NewMap()
+	ss := newMap()
 	ss.cntr["func"] = Snippet{"func", "Go function", "func ${1:name} () {}"}
 	_, err := ss.Find("func")
 	if err != nil {
@@ -45,7 +45,7 @@ func TestSnippetsMapFind(t *testing.T) {
 }
 
 func TestSnippetsMapList(t *testing.T) {
-	ss := NewMap()
+	ss := newMap()
 	ss.cntr = map[string]Snippet{
 		"func":   {"func", "Go function", "func() {}"},
 		"struct": {"struct", "Go struct", "type struct {}"},
@@ -58,7 +58,7 @@ func TestSnippetsMapList(t *testing.T) {
 }
 
 func TestSnippetsListObj(t *testing.T) {
-	ss := NewMap()
+	ss := newMap()
 	ss.cntr = map[string]Snippet{
 		"func":   {"func", "Go function", "func() {}"},
 		"struct": {"struct", "Go struct", "type struct {}"},
@@ -78,7 +78,7 @@ func TestSnippetsListObj(t *testing.T) {
 }
 
 func TestSnippetsMapDelete(t *testing.T) {
-	sm := NewMap()
+	sm := newMap()
 	sm.cntr = map[string]Snippet{
 		"func":   {"func", "Go function", "func() {}"},
 		"struct": {"struct", "Go struct", "type struct {}"},

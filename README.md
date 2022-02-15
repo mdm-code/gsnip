@@ -148,3 +148,11 @@ Makefile:
 ```sh
 go get -u golang.org/x/lint/golint
 ```
+
+
+## License
+
+Copyright (c) 2022 Michał Adamczyk.
+
+This project is licensed under the [GNU GPL 3 license](https://opensource.org/licenses/GPL-3.0).
+See [LICENSE](LICENSE) for more details.

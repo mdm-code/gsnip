@@ -1,6 +1,10 @@
-![(logo)](./logo.png)
+<h1 align="center">
+	<div>
+		<img src="https://raw.githubusercontent.com/mdm-code/mdm-code.github.io/main/gsnip_logo.png" alt="logo"/>
+	</div>
+</h1>
 
-# Gsnip
+<h4 align="center">A simple snippet manager for Unix-based systems.</h4>
 
 <div align="center">
 <p>

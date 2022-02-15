@@ -2,7 +2,16 @@
 
 # Gsnip
 
-[![Action Status](https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg)](https://github.com/mdm-code/gsnip/actions)
+<div align="center">
+<p>
+	<a href="https://github.com/mdm-code/gsnip/actions?query=workflow%3ACI">
+		<img alt="Build status" src="https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg"
+	</a>
+    <a href="https://opensource.org/licenses/GPL-3.0" rel="nofollow">
+        <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/gsnip">
+    </a>
+</p>
+</div>
 
 This my personal snippet manager. It lets you find, insert, delete and list out
 all snippets stored in a text file and written with straightforward, I believe,

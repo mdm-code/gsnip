@@ -158,7 +158,7 @@ func TestTakeBetweenFails(t *testing.T) {
 func TestParserRun(t *testing.T) {
 	parser := NewParser()
 	for _, r := range failingFileReaders {
-		result, err := parser.Run(r)
+		result, err := parser.run(r)
 		if err == nil {
 			t.Errorf("want empty slice; has %v", result)
 		}
@@ -167,7 +167,7 @@ func TestParserRun(t *testing.T) {
 
 func TestParserRunEmpty(t *testing.T) {
 	parser := NewParser()
-	_, err := parser.Run(strings.NewReader(``))
+	_, err := parser.run(strings.NewReader(``))
 	if !errors.Is(err, ErrEmptyFile) {
 		t.Errorf("expected parser to raise %w", ErrEmptyFile)
 	}
@@ -175,7 +175,7 @@ func TestParserRunEmpty(t *testing.T) {
 
 func TestParserRunErrLine(t *testing.T) {
 	parser := NewParser()
-	_, err := parser.Run(strings.NewReader(`startsnip
+	_, err := parser.run(strings.NewReader(`startsnip
 fn main() {
 	println!("Hello, world!");
 }

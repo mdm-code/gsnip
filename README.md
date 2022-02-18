@@ -14,6 +14,9 @@
     <a href="https://opensource.org/licenses/GPL-3.0" rel="nofollow">
         <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/gsnip">
     </a>
+    <a href="https://goreportcard.com/report/github.com/mdm-code/gsnip">
+        <img alt="Go report card" src="https://goreportcard.com/badge/github.com/mdm-code/gsnip">
+    </a>
 </p>
 </div>
 

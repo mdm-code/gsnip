@@ -1,4 +1,4 @@
-name: gsnip CI/CD
+name: CI
 
 on:
   push:
@@ -8,23 +8,31 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ ubuntu-latest ]
         go-version: [ '1.17' ]
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
-
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
 
+    - name: Checkout
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        go version
+        go install golang.org/x/lint/golint@latest
+
     - name: Build
       run: make build
 
     - name: Test
-      run: make test
+      run: go test -v -coverprofile coverage.txt -covermode atomic ./...
+
+    - name: Coverage
+      uses: codecov/codecov-action@v2.1.0

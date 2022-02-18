@@ -9,7 +9,7 @@
 <div align="center">
 <p>
 	<a href="https://github.com/mdm-code/gsnip/actions?query=workflow%3ACI">
-		<img alt="Build status" src="https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg"
+		<img alt="Build status" src="https://github.com/mdm-code/gsnip/workflows/CI/badge.svg"
 	</a>
     <a href="https://app.codecov.io/gh/mdm-code/gsnip">
         <img alt="Code coverage" src="https://codecov.io/gh/mdm-code/gsnip/branch/main/graphs/badge.svg?branch=main">
@@ -150,7 +150,7 @@ fields. There isn't really more to it---it does the same work as a flat file.
 ## Installation
 
 ```sh
-go install github.com/mdm-code/gsnip
+go install github.com/mdm-code/gsnip@latest
 ```
 
 If you want to build it from source, consult `Makefile`; there is an `install`
@@ -169,7 +169,7 @@ Don't forget to install `golint` before you run the test command from the
 `Makefile`:
 
 ```sh
-go install -u golang.org/x/lint/golint
+go install golang.org/x/lint/golint@latest
 ```
 
 

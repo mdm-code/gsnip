@@ -23,7 +23,7 @@ func TestEvalCommand(t *testing.T) {
 	}
 }
 
-// Test evaulation with some body to be kept.
+// Test evaluation with some body to be kept.
 func TestEvalWithBody(t *testing.T) {
 	tab := []struct {
 		in   string

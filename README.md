@@ -11,6 +11,9 @@
 	<a href="https://github.com/mdm-code/gsnip/actions?query=workflow%3ACI">
 		<img alt="Build status" src="https://github.com/mdm-code/gsnip/workflows/gsnip%20CI/CD/badge.svg"
 	</a>
+    <a href="https://app.codecov.io/gh/mdm-code/gsnip">
+        <img alt="Code coverage" src="https://codecov.io/gh/mdm-code/gsnip/branch/main/graphs/badge.svg?branch=main">
+    </a>
     <a href="https://opensource.org/licenses/GPL-3.0" rel="nofollow">
         <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/gsnip">
     </a>

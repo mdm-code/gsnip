@@ -14,6 +14,9 @@
     <a href="https://opensource.org/licenses/GPL-3.0" rel="nofollow">
         <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/gsnip">
     </a>
+    <a href="https://pkg.go.dev/github.com/mdm-code/gsnip">
+        <img alt="Go package docs" src="https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white">
+    </a>
 </p>
 </div>
 
@@ -21,6 +24,9 @@ This my personal snippet manager. It lets you find, insert, delete and list out
 all snippets stored in a text file and written with straightforward, I believe,
 syntax rules. My goal was to keep the program as simple as possible: it scans
 the source file with snippets and offers an interface to interact with it.
+
+See [Usage](#usage) section below to see how to use `gsnip`. Source code
+documentation is available here: https://pkg.go.dev/github.com/mdm-code/gsnip.
 
 
 ## Usage

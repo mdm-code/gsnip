@@ -20,16 +20,17 @@
 </p>
 </div>
 
-This my personal snippet manager. It lets you find, insert, delete and list out
-all snippets stored in a text file and written with straightforward, I believe,
-syntax rules. My goal was to keep the program as simple as possible: it scans
-the source file with snippets and offers an interface to interact with it.
+`gsnip` lets you find, insert, delete and list out all snippets stored in a
+text file. The syntax rules for writing snippets are simple and
+straightforward. The idea is to keep this program as simple as possible: what
+it does is it sources a file with snippets and offers an interface to interact
+with it.
 
 
 ## Usage
 
 There are two parts of the workflow: one, `gsnipd`, a server running on Unix
-Domain Socket handling connections, and `gsnip`, which is the client that
+Domain Socket, handling connections, and `gsnip`, which is the client that
 relies on `FD0` or `SDTIN` and simple sub-commands to send messages to the
 server.
 
@@ -140,7 +141,7 @@ fields. There isn't really more to it---it does the same work as a flat file.
 ## Installation
 
 ```sh
-go get github.com/mdm-code/gsnip
+go install github.com/mdm-code/gsnip
 ```
 
 If you want to build it from source, consult `Makefile`; there is an `install`
@@ -159,7 +160,7 @@ Don't forget to install `golint` before you run the test command from the
 `Makefile`:
 
 ```sh
-go get -u golang.org/x/lint/golint
+go install -u golang.org/x/lint/golint
 ```
 
 

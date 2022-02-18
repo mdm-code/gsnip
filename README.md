@@ -17,6 +17,9 @@
     <a href="https://goreportcard.com/report/github.com/mdm-code/gsnip">
         <img alt="Go report card" src="https://goreportcard.com/badge/github.com/mdm-code/gsnip">
     </a>
+    <a href="https://pkg.go.dev/github.com/mdm-code/gsnip">
+        <img alt="Go package docs" src="https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white">
+    </a>
 </p>
 </div>
 
@@ -25,6 +28,9 @@ text file. The syntax rules for writing snippets are simple and
 straightforward. The idea is to keep this program as simple as possible: what
 it does is it sources a file with snippets and offers an interface to interact
 with it.
+
+See [Usage](#usage) section below to see how to use `gsnip`. Source code
+documentation is available here: https://pkg.go.dev/github.com/mdm-code/gsnip.
 
 
 ## Usage

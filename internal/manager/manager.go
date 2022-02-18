@@ -78,19 +78,27 @@ func (m *Manager) find(s string) (string, error) {
 	return searched.Body, nil
 }
 
-func (m *Manager) insert(c string) (string, error) {
-	reader := strings.NewReader(c)
-	parsed, err := m.p.Run(reader)
+func (m *Manager) insert(contents string) (string, error) {
+	reader := strings.NewReader(contents)
+	container, err := m.p.Parse(reader)
 	if err != nil {
 		return "ERROR", err
 	}
-	for _, p := range parsed {
+
+	snips, err := container.ListObj()
+	if err != nil {
+		return "ERROR", err
+	}
+
+	for _, p := range snips {
 		err = m.c.Insert(p)
 		if err != nil {
 			return "ERROR", err
 		}
 	}
-	snips, err := m.c.ListObj()
+
+	// NOTE: Rewrite file contents
+	snips, err = m.c.ListObj()
 	if err != nil {
 		return "ERROR", err
 	}

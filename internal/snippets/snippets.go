@@ -27,8 +27,8 @@ func (s Snippet) Repr() string {
 	return fmt.Sprintf("startsnip %s \"%s\"\n%s\nendsnip\n\n", s.Name, s.Desc, s.Body)
 }
 
-// Map is a map-based implementation of a snippet Container.
-type Map struct {
+// mapContainer is a map-based implementation of a snippet Container.
+type mapContainer struct {
 	cntr map[string]Snippet
 	sync.Mutex
 }
@@ -39,22 +39,22 @@ type Map struct {
 func NewSnippetsContainer(t string) (Container, error) {
 	switch t {
 	case "map":
-		return NewMap(), nil
+		return newMap(), nil
 	default:
 		return nil, fmt.Errorf("container type (%s) is not implemented", t)
 	}
 }
 
-// NewMap creates an instance of the snippet container relying on a map composite
+// newMap creates an instance of the snippet container relying on a map composite
 // type.
-func NewMap() *Map {
-	return &Map{
+func newMap() *mapContainer {
+	return &mapContainer{
 		cntr: make(map[string]Snippet),
 	}
 }
 
 // Insert inserts a snippet to the container.
-func (s *Map) Insert(snip Snippet) (err error) {
+func (s *mapContainer) Insert(snip Snippet) (err error) {
 	s.Lock()
 	defer s.Unlock()
 	if _, exists := s.cntr[snip.Name]; !exists {
@@ -67,7 +67,7 @@ func (s *Map) Insert(snip Snippet) (err error) {
 }
 
 // Find searches for a snippet name in the container.
-func (s *Map) Find(str string) (Snippet, error) {
+func (s *mapContainer) Find(str string) (Snippet, error) {
 	s.Lock()
 	defer s.Unlock()
 	var snip Snippet
@@ -79,7 +79,7 @@ func (s *Map) Find(str string) (Snippet, error) {
 }
 
 // List lists out all stored snippet names.
-func (s *Map) List() ([]string, error) {
+func (s *mapContainer) List() ([]string, error) {
 	s.Lock()
 	defer s.Unlock()
 	var result []string
@@ -93,7 +93,7 @@ func (s *Map) List() ([]string, error) {
 }
 
 // Delete deletes a snippet from the container.
-func (s *Map) Delete(key string) error {
+func (s *mapContainer) Delete(key string) error {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.cntr, key)
@@ -101,7 +101,7 @@ func (s *Map) Delete(key string) error {
 }
 
 // ListObj lists out all snippets stored in the container.
-func (s *Map) ListObj() (result []Snippet, err error) {
+func (s *mapContainer) ListObj() (result []Snippet, err error) {
 	s.Lock()
 	defer s.Unlock()
 	for _, v := range s.cntr {

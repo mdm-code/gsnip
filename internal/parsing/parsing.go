@@ -63,7 +63,7 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	parsed, err := p.Run(i)
+	parsed, err := p.run(i)
 	if err != nil {
 		return smap, err
 	}
@@ -73,8 +73,8 @@ func (p *Parser) Parse(i io.Reader) (snippets.Container, error) {
 	return smap, nil
 }
 
-// Run runs the parser against input text.
-func (p *Parser) Run(i io.Reader) ([]snippets.Snippet, error) {
+// run runs the parser against input text.
+func (p *Parser) run(i io.Reader) ([]snippets.Snippet, error) {
 	result, err := p.sm.run(i)
 	return result, err
 }

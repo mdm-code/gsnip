@@ -1,20 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"io"
-	"net"
+	"net/rpc/jsonrpc"
 	"os"
-	"strings"
+
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
-var (
-	sock string
-)
+var sock string
 
-var errPrefix string = "ERROR"
+var cmdList []cmd
+
+var cmdMap = make(map[string]cmd)
 
 type cmd struct {
 	name    string
@@ -22,10 +22,6 @@ type cmd struct {
 	desc    string
 	aliases []string
 }
-
-var cmdList []cmd
-
-var cmdMap = make(map[string]cmd)
 
 func addCmd(c cmd) {
 	cmdList = append(cmdList, c)
@@ -83,27 +79,27 @@ func dispatchCmd(args []string) error {
 	return fmt.Errorf("command not found: %s", args[0])
 }
 
-func transact(kind string, data string) error {
-	conn, err := net.Dial("unix", sock)
+func transact(op stream.Opcode, data []byte) error {
+	conn, err := jsonrpc.Dial("unix", sock)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	buf := make([]byte, 4096)
-	_, err = fmt.Fprintf(conn, kind+" "+data)
+	request := stream.Request{Operation: op, Body: data}
+	var reply stream.Reply
+
+	err = conn.Call("Manager.Execute", request, &reply)
 	if err != nil {
 		return err
 	}
-	n, err := bufio.NewReader(conn).Read(buf)
-	if err != nil {
-		return err
-	}
-	if strings.HasPrefix(string(buf[:n]), errPrefix) {
-		fmt.Fprintf(os.Stderr, "%s\n", buf[:n])
+
+	if reply.Result == stream.Failure {
+		fmt.Fprintf(os.Stderr, "%s\n", "ERROR")
 		return nil
 	}
-	fmt.Fprintf(os.Stdout, "%s\n", buf[:n])
+
+	fmt.Fprintf(os.Stdout, "%s\n", reply.Body)
 	return nil
 }
 

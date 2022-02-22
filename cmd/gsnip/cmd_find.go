@@ -5,6 +5,8 @@ import (
 	"flag"
 	"io"
 	"os"
+
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
 func init() {
@@ -35,7 +37,7 @@ func cmdFind(args []string) error {
 		}
 	}
 	for _, p := range params {
-		err := transact("@FND", p)
+		err := transact(stream.Find, []byte(p))
 		if err != nil && err != io.EOF {
 			return err
 		}

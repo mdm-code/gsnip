@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"os"
 	"sync"
 	"testing"
 )
@@ -46,4 +47,67 @@ func TestFileHandlerInteraction(t *testing.T) {
 	fh.Write(dst)
 	fh.Seek(0, 0)
 	fh.Close()
+}
+
+// Test if files are opened correctly.
+func TestOpen(t *testing.T) {
+	data := []struct {
+		name   string
+		opener opener
+		closer func(string)
+	}{
+		{
+			"perm",
+			&openPerm{fname: "testfile"},
+			func(fname string) { os.Remove(fname) },
+		},
+		{
+			"temp",
+			&openTemp{},
+			func(fname string) { os.Remove(fname) },
+		},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			_, err := d.opener.open()
+			_, err = d.opener.open()
+			if err != nil {
+				t.Errorf("failed to open %v", d.opener)
+			}
+
+			// NOTE: Could not defer it because the name is evaluated later
+			d.closer(d.opener.name())
+		})
+	}
+}
+
+// Test if the file opener fails when the name contains illegal characters.
+func TestOpenFail(t *testing.T) {
+	wrongFname := "/failed"
+	data := []struct {
+		name   string
+		opener opener
+		closer func(string)
+	}{
+		{
+			"perm",
+			&openPerm{wrongFname},
+			func(fname string) { os.Remove(fname) },
+		},
+		{
+			"temp",
+			&openTemp{wrongFname},
+			func(fname string) { os.Remove(fname) },
+		},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			_, err := d.opener.open()
+			_, err = d.opener.open()
+			if err == nil {
+				t.Errorf("failed to open %v", d.opener)
+			}
+			d.closer(d.opener.name())
+		})
+	}
 }

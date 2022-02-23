@@ -111,3 +111,40 @@ func TestOpenFail(t *testing.T) {
 		})
 	}
 }
+
+// Make sure that file handlers are created properly.
+func TestFileHandlerCreation(t *testing.T) {
+	data := []struct {
+		name  string
+		fname string
+		ft    FType
+	}{
+		{"perm", "testfile", Perm},
+		{"temp", "", Temp},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			h, err := NewFileHandler(d.fname, d.ft)
+			if err != nil {
+				t.Errorf("want: %v; has: %v", nil, err)
+			}
+			h.Remove()
+		})
+	}
+}
+
+// Check if the file handler fails on illegal file name.
+func TestTestFileHandlerWrongFName(t *testing.T) {
+	_, err := NewFileHandler("/failed", Perm)
+	if err == nil {
+		t.Error("expected an error caused by wrong file name")
+	}
+}
+
+// Verify if the wrong file type causes an error.
+func TestFileHandlerWrongType(t *testing.T) {
+	_, err := NewFileHandler("", FType(3))
+	if err == nil {
+		t.Error("expected an error caused by worng file type")
+	}
+}

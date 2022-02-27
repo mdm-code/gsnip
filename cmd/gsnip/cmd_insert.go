@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mdm-code/gsnip/internal/editor"
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
 func init() {
@@ -31,7 +32,7 @@ func cmdInsert(args []string) error {
 	if err != nil {
 		return err
 	}
-	err = transact("@INS", data)
+	err = transact(stream.Insert, []byte(data))
 	return err
 }
 

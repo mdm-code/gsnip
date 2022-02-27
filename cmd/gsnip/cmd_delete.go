@@ -5,6 +5,8 @@ import (
 	"flag"
 	"io"
 	"os"
+
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
 func init() {
@@ -34,8 +36,8 @@ func cmdDel(args []string) error {
 			names = append(names, s.Text())
 		}
 	}
-	for _, n := range names {
-		err := transact("@DEL", n)
+	for _, name := range names {
+		err := transact(stream.Delete, []byte(name))
 		if err != nil && err != io.EOF {
 			return err
 		}

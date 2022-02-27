@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -47,6 +48,64 @@ func TestFileHandlerInteraction(t *testing.T) {
 	fh.Write(dst)
 	fh.Seek(0, 0)
 	fh.Close()
+}
+
+func TestFileHandlerLocking(t *testing.T) {
+	fh := &FileHandler{
+		&mockFile{},
+		&sync.Mutex{},
+		&mockOpener{},
+	}
+	fh.Lock()
+	fh.Unlock()
+}
+
+func TestFileHandlerTruncating(t *testing.T) {
+	fh := &FileHandler{
+		&mockFile{},
+		&sync.Mutex{},
+		&mockOpener{},
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recovered from: ", err)
+		}
+	}()
+	err := fh.Open()
+	if err != nil {
+		t.Errorf("unexpected error was raised: %s", err)
+	}
+}
+
+func TestFileHandlerOpen(t *testing.T) {
+	fh := &FileHandler{
+		&mockFile{},
+		&sync.Mutex{},
+		&mockOpener{},
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recovered from: ", err)
+		}
+	}()
+	fh.Truncate(0)
+}
+
+func TestFileHandlerReload(t *testing.T) {
+	fh := &FileHandler{
+		&mockFile{},
+		&sync.Mutex{},
+		&mockOpener{},
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recovered from: ", err)
+		}
+	}()
+	err := fh.Reload()
+	if err != nil {
+		t.Errorf("error was raised: %s", err)
+	}
 }
 
 // Test if files are opened correctly.

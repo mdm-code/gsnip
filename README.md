@@ -69,9 +69,9 @@ it could not find one.
 Then you can interact with the server using `gsnip` client like this:
 
 ```sh
-echo [snip-name] | gsnip find
+echo [snip-name ...] | gsnip find
+echo [snip-name ...] | gsnip delete
 gsnip list
-echo [snip-name] | gsnip delete
 gsnip insert
 gsnip reload
 ```
@@ -82,7 +82,7 @@ You can delete existing snippets with `delete` subcommand. You can also `insert`
 new snippets through an editor or `STDIN`.
 
 In order to add a new snippet right from the command line, the easy way would be
-to use HereDoc like this, for instance:
+to use `here documents` like this, for instance:
 
 ```sh
 gsnip insert << EOF
@@ -100,21 +100,10 @@ sending `SIGHUP` to the process using `kill -1 [pid]`. The latter is annoying
 because you have to find the process id with `ps` before sending the signal.
 Another way would be to write PID to a known file that the client could access.
 
-For the sake of clarity, there are five four-byte-long headers that a `gsnipd`
-server can understand:
-
-- @LST
-- @RLD
-- @FND
-- @INS
-- @DEL
-
-They correspond to the client subcommands.
-
 The idea was to use `gsnip` as an application agnostic tool. Since it operates
 on standard file descriptors, it can be used in most Unix pipes and most
 importantly `vim` through the use of `!` inside the editor. I do not like other
-editors.
+editors all that much.
 
 
 ## Syntax
@@ -137,14 +126,6 @@ to be respected:
    all the snippets found in the file).
 3. `COMMENT` should always be enclosed in double quotes.
 4. Finally, `BODY` can be pretty much anything.
-
-
-The `snippet` package has a snippet container based on `PostgreSQL` database.
-You might want to use it instead of the file-based implementation, but you'd
-need to do a little rewrite of the server `gsnipd` command to accommodate for
-this change. I personally do not like this because it makes the program clunky.
-Database would then contain a simple table with the name, comment and body text
-fields. There isn't really more to it---it does the same work as a flat file.
 
 
 ## Installation

@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"net"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/mdm-code/gsnip/internal/fs"
 	"github.com/mdm-code/gsnip/internal/manager"
@@ -51,7 +51,6 @@ type unixServer struct {
 	manager     *manager.Manager
 	signals     chan os.Signal
 	logger      logger
-	interpreter stream.Interpreter
 	fileHandler *fs.FileHandler
 }
 
@@ -84,7 +83,6 @@ func newUnixServer(sock string, fname string) (*unixServer, error) {
 		manager:     m,
 		signals:     make(chan os.Signal, 1),
 		logger:      newLogger(),
-		interpreter: stream.NewInterpreter(),
 		fileHandler: fh,
 	}, nil
 }
@@ -92,6 +90,10 @@ func newUnixServer(sock string, fname string) (*unixServer, error) {
 // Listen causes the server to start listening on the socket.
 func (s *unixServer) Listen() (err error) {
 	s.listener, err = net.Listen("unix", s.socket)
+	if err != nil {
+		return err
+	}
+	err = rpc.Register(s.manager)
 	if err != nil {
 		return err
 	}
@@ -116,7 +118,9 @@ func (s *unixServer) AwaitSignal(sig ...os.Signal) {
 		for {
 			select {
 			case <-s.signals:
-				err := s.manager.Reload()
+				rq := stream.Request{Operation: stream.Reload, Body: []byte{}}
+				var rp stream.Reply
+				err := s.manager.Execute(rq, &rp)
 				if err != nil {
 					s.Log("ERROR", err)
 					continue
@@ -135,59 +139,11 @@ func (s *unixServer) AwaitConn() {
 			s.Log("INFO", err)
 			continue
 		}
-
-		buff := make([]byte, 2048)
-
-		length, err := conn.Read(buff)
-		if err != nil {
-			if err == io.EOF {
-				s.Log("INFO", "client sent EOF")
-				continue
-			}
-			s.Log("INFO", err)
-			continue
-		}
-
 		s.Log(
 			"INFO",
-			fmt.Sprintf("read %s from %v", buff, conn.RemoteAddr().Network()),
+			fmt.Sprintf("received connection from %v", conn.RemoteAddr().Network()),
 		)
-		go s.respond(conn, buff[:length])
-	}
-}
-
-func (s *unixServer) respond(conn net.Conn, buff []byte) {
-	defer conn.Close()
-
-	msg := s.interpreter.Eval(buff)
-
-	switch msg.T() {
-	case stream.Rld:
-		s.signals <- syscall.SIGHUP
-		_, err := conn.Write([]byte(""))
-		if err != nil {
-			s.Log("ERROR", err)
-			return
-		}
-		return
-	default:
-		resp, err := s.manager.Execute(msg)
-		if err != nil {
-			s.Log("ERROR", err)
-			_, err = conn.Write([]byte("ERROR"))
-			if err != nil {
-				s.Log("ERROR", err)
-				return
-			}
-			return
-		}
-		outMsg := []byte(resp)
-		_, err = conn.Write(outMsg)
-		if err != nil {
-			s.Log("ERROR", err)
-			return
-		}
-		s.Log("INFO", "write successful")
+		go jsonrpc.ServeConn(conn)
 	}
 }
 

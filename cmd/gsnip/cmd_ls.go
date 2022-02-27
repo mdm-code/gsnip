@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+
+	"github.com/mdm-code/gsnip/internal/stream"
 )
 
 func init() {
@@ -22,7 +24,7 @@ func cmdLs(args []string) error {
 		return err
 	}
 	args = fs.Args()
-	err = transact("@LST", "")
+	err = transact(stream.List, []byte{})
 	if err != nil {
 		return err
 	}

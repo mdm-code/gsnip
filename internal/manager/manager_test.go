@@ -36,22 +36,20 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 	}
 	c.Insert(s)
 	m := newManager(&fs.FileHandler{}, c, &p)
-	input := "@FND func"
-	interp := stream.NewInterpreter()
-	tkn := interp.Eval([]byte(input))
-	has, err := m.Execute(tkn)
+	rq := stream.Request{Operation: stream.Find, Body: []byte("func")}
+	var rp stream.Reply
+	err := m.Execute(rq, &rp)
 	want, _ := c.Find("func")
-	if err != nil || has != want.Body {
+	if err != nil || string(rp.Body) != want.Body {
 		t.Error("executing find fails")
 	}
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
 	m := newManager(&fs.FileHandler{}, c, &p)
-	interp := stream.NewInterpreter()
-	msg := "@LST"
-	tkn := interp.Eval([]byte(msg))
-	has, err := m.Execute(tkn)
+	rq := stream.Request{Operation: stream.List}
+	var rp stream.Reply
+	err := m.Execute(rq, &rp)
 	var want string
 	listing, err := c.List()
 	if err != nil {
@@ -63,17 +61,16 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 	if err != nil {
 		t.Error("failed to execute the list command")
 	}
-	if has != want {
-		t.Errorf("has: %s; want %s", has, want)
+	if string(rp.Body) != want {
+		t.Errorf("has: %s; want %s", string(rp.Body), want)
 	}
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
 	m := newManager(&fs.FileHandler{}, c, &p)
-	interp := stream.NewInterpreter()
-	msg := "search"
-	tkn := interp.Eval([]byte(msg))
-	_, err := m.Execute(tkn)
+	rq := stream.Request{Operation: stream.Undefined}
+	var rp stream.Reply
+	err := m.Execute(rq, &rp)
 	if err == nil {
 		t.Error("unknown command or missing snippet does not raise an error")
 	}

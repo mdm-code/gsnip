@@ -35,26 +35,37 @@ func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser)
 // Execute runs a server command against the snippet container.
 //
 // Allowed commands:
-// 	* @LST: list out all stored snippets
-// 	* @FND: retrieve a snippet
-// 	* @INS: insert a snippet to container
-// 	* @DEL: delete a snippet
-func (m *Manager) Execute(msg stream.Msg) (string, error) {
-	if msg.IsUnbound() {
-		return "", fmt.Errorf("empty strings are unbound")
-	}
-	switch msg.T() {
-	case stream.Lst:
-		return m.list()
-	case stream.Fnd:
-		return m.find(string(msg.Contents()))
-	case stream.Ins:
-		return m.insert(string(msg.Contents()))
-	case stream.Del:
-		return m.delete(string(msg.Contents()))
+// 	* List out all stored snippets
+// 	* Find a single snippet
+// 	* Insert a snippet to the container
+// 	* Delete a snippet from the container
+//  * Reload the snippet container
+func (m *Manager) Execute(request stream.Request, reply *stream.Reply) error {
+	var body string
+	var err error
+
+	switch request.Operation {
+	case stream.List:
+		body, err = m.list()
+	case stream.Find:
+		body, err = m.find(string(request.Body))
+	case stream.Insert:
+		body, err = m.insert(string(request.Body))
+	case stream.Delete:
+		body, err = m.delete(string(request.Body))
+	case stream.Reload:
+		err = m.reload()
 	default:
-		return "ERROR", fmt.Errorf("message kind %s is not supported", msg.TString())
+		err = fmt.Errorf("request %v is not supported", request.Operation)
 	}
+
+	if err != nil {
+		reply.Result = stream.Failure
+	} else {
+		reply.Result = stream.Success
+		reply.Body = []byte(body)
+	}
+	return err
 }
 
 func (m *Manager) list() (string, error) {
@@ -106,7 +117,7 @@ func (m *Manager) insert(contents string) (string, error) {
 	for _, s := range snips {
 		m.fh.Write([]byte(s.Repr()))
 	}
-	err = m.Reload()
+	err = m.reload()
 	if err != nil {
 		return "ERROR", err
 	}
@@ -124,15 +135,14 @@ func (m *Manager) delete(s string) (string, error) {
 		m.fh.Write([]byte(s.Repr()))
 	}
 
-	err = m.Reload()
+	err = m.reload()
 	if err != nil {
 		return "ERROR", err
 	}
 	return "", nil
 }
 
-// Reload all snippets from the source file.
-func (m *Manager) Reload() error {
+func (m *Manager) reload() error {
 	err := m.fh.Reload()
 	if err != nil {
 		return err

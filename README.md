@@ -131,7 +131,8 @@ to be respected:
 ## Installation
 
 ```sh
-go install github.com/mdm-code/gsnip@latest
+go install github.com/mdm-code/gsnip/cmd/gsnip@latest
+go install github.com/mdm-code/gsnip/cmd/gsnipd@latest
 ```
 
 If you want to build it from source, consult `Makefile`; there is an `install`

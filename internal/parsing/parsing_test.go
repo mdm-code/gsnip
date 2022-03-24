@@ -169,7 +169,7 @@ func TestParserRunEmpty(t *testing.T) {
 	parser := NewParser()
 	_, err := parser.run(strings.NewReader(``))
 	if !errors.Is(err, ErrEmptyFile) {
-		t.Errorf("expected parser to raise %w", ErrEmptyFile)
+		t.Errorf("expected parser to raise %v", ErrEmptyFile)
 	}
 }
 
@@ -181,6 +181,6 @@ fn main() {
 }
 endsnip`))
 	if !errors.Is(err, ErrLine) {
-		t.Errorf("expected parser to raise %w", ErrLine)
+		t.Errorf("expected parser to raise %v", ErrLine)
 	}
 }

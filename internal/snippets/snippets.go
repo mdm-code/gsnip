@@ -30,7 +30,7 @@ func (s Snippet) Repr() string {
 // mapContainer is a map-based implementation of a snippet Container.
 type mapContainer struct {
 	cntr map[string]Snippet
-	sync.Mutex
+	sync.RWMutex
 }
 
 // NewSnippetsContainer creates a fresh instance of snippets container.
@@ -80,8 +80,8 @@ func (s *mapContainer) Find(str string) (Snippet, error) {
 
 // List lists out all stored snippet names.
 func (s *mapContainer) List() ([]string, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 	var result []string
 	var str string
 	for _, v := range s.cntr {
@@ -102,8 +102,8 @@ func (s *mapContainer) Delete(key string) error {
 
 // ListObj lists out all snippets stored in the container.
 func (s *mapContainer) ListObj() (result []Snippet, err error) {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 	for _, v := range s.cntr {
 		result = append(result, v)
 	}

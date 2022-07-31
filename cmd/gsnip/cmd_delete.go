@@ -14,8 +14,8 @@ func init() {
 		cmd{
 			name:    "delete",
 			fn:      cmdDel,
-			desc:    "gsnip\tdelete\tdelete a snippet",
-			aliases: []string{"d"},
+			desc:    "delete a snippet",
+			aliases: []string{"d", "del"},
 		},
 	)
 }

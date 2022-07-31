@@ -11,8 +11,8 @@ func init() {
 		cmd{
 			name:    "reload",
 			fn:      cmdReload,
-			desc:    "gsnip\treload\treload snippet source file",
-			aliases: []string{"rld", "rl"},
+			desc:    "reload snippet source file",
+			aliases: []string{"r", "rld"},
 		},
 	)
 }

@@ -68,8 +68,8 @@ func (s *mapContainer) Insert(snip Snippet) (err error) {
 
 // Find searches for a snippet name in the container.
 func (s *mapContainer) Find(str string) (Snippet, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 	var snip Snippet
 	snip, ok := s.cntr[str]
 	if !ok {

@@ -11,8 +11,8 @@ func init() {
 		cmd{
 			name:    "list",
 			fn:      cmdLs,
-			desc:    "gsnip\tlist\tlist all snippets",
-			aliases: []string{"ls"},
+			desc:    "list all snippets",
+			aliases: []string{"l", "ls"},
 		},
 	)
 }

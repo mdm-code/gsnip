@@ -75,7 +75,7 @@ func (o *openTemp) name() string { return o.fname }
 // file access and operations.
 type FileHandler struct {
 	file  readWriteSeekCloseTruncator
-	mutex *sync.Mutex
+	mutex *sync.RWMutex
 	opener
 }
 
@@ -95,23 +95,29 @@ func NewFileHandler(fname string, ft FType) (*FileHandler, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := &FileHandler{f, &sync.Mutex{}, o}
+	h := &FileHandler{f, &sync.RWMutex{}, o}
 	return h, nil
 }
 
 // Open opens a file.
 func (h *FileHandler) Open() (err error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	h.file, err = h.open()
 	return
 }
 
 // Read reads a file.
 func (h *FileHandler) Read(p []byte) (int, error) {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
 	return h.file.Read(p)
 }
 
 // Write writes bytes to a file.
 func (h *FileHandler) Write(p []byte) (int, error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	return h.file.Write(p)
 }
 
@@ -127,22 +133,16 @@ func (h *FileHandler) Seek(offset int64, whence int) (int64, error) {
 
 // Truncate truncates a file to size.
 func (h *FileHandler) Truncate(size int64) (err error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	h.file.Truncate(size)
 	return
 }
 
-// Lock locks up the file access.
-func (h *FileHandler) Lock() {
-	h.mutex.Lock()
-}
-
-// Unlock unlocks access to a file.
-func (h *FileHandler) Unlock() {
-	h.mutex.Unlock()
-}
-
 // Reload reloads a file.
 func (h *FileHandler) Reload() error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	err := h.Close()
 	if err != nil {
 		return err
@@ -154,6 +154,8 @@ func (h *FileHandler) Reload() error {
 
 // Remove attempts to remove a file from the file system.
 func (h *FileHandler) Remove() error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	err := os.Remove(h.Name())
 	return err
 }

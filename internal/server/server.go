@@ -19,22 +19,6 @@ type logger interface {
 
 type loggerAdapter func(string, interface{})
 
-func newLogger() logger {
-	// NOTE: Add new loggers here
-	switch {
-	default:
-		return loggerAdapter(toStderr)
-	}
-}
-
-func (l loggerAdapter) log(level string, msg interface{}) {
-	l(level, msg)
-}
-
-func toStderr(level string, msg interface{}) {
-	fmt.Fprintf(os.Stderr, "%s %s: %s\n", "gsnipd", level, msg)
-}
-
 // Server specifies the functional server interface.
 type Server interface {
 	Listen() error
@@ -52,6 +36,18 @@ type unixServer struct {
 	signals     chan os.Signal
 	logger      logger
 	fileHandler *fs.FileHandler
+}
+
+func newLogger() logger {
+	// NOTE: Add new loggers here
+	switch {
+	default:
+		return loggerAdapter(toStderr)
+	}
+}
+
+func toStderr(level string, msg interface{}) {
+	fmt.Fprintf(os.Stderr, "%s %s: %s\n", "gsnipd", level, msg)
 }
 
 // NewServer creates a server connecting over the specified network. The address
@@ -85,6 +81,10 @@ func newUnixServer(sock string, fname string) (*unixServer, error) {
 		logger:      newLogger(),
 		fileHandler: fh,
 	}, nil
+}
+
+func (l loggerAdapter) log(level string, msg interface{}) {
+	l(level, msg)
 }
 
 // Listen causes the server to start listening on the socket.

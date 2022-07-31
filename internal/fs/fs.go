@@ -101,8 +101,6 @@ func NewFileHandler(fname string, ft FType) (*FileHandler, error) {
 
 // Open opens a file.
 func (h *FileHandler) Open() (err error) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
 	h.file, err = h.open()
 	return
 }
@@ -141,8 +139,6 @@ func (h *FileHandler) Truncate(size int64) (err error) {
 
 // Reload reloads a file.
 func (h *FileHandler) Reload() error {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
 	err := h.Close()
 	if err != nil {
 		return err
@@ -154,8 +150,6 @@ func (h *FileHandler) Reload() error {
 
 // Remove attempts to remove a file from the file system.
 func (h *FileHandler) Remove() error {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
 	err := os.Remove(h.Name())
 	return err
 }

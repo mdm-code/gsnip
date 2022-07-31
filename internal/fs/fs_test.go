@@ -41,7 +41,7 @@ func TestFileHandlerInteraction(t *testing.T) {
 	dst := []byte{}
 	fh := &FileHandler{
 		&mockFile{},
-		&sync.Mutex{},
+		&sync.RWMutex{},
 		&mockOpener{},
 	}
 	fh.Read(dst)
@@ -53,17 +53,17 @@ func TestFileHandlerInteraction(t *testing.T) {
 func TestFileHandlerLocking(t *testing.T) {
 	fh := &FileHandler{
 		&mockFile{},
-		&sync.Mutex{},
+		&sync.RWMutex{},
 		&mockOpener{},
 	}
-	fh.Lock()
-	fh.Unlock()
+	fh.mutex.Lock()
+	fh.mutex.Unlock()
 }
 
 func TestFileHandlerTruncating(t *testing.T) {
 	fh := &FileHandler{
 		&mockFile{},
-		&sync.Mutex{},
+		&sync.RWMutex{},
 		&mockOpener{},
 	}
 	defer func() {
@@ -80,7 +80,7 @@ func TestFileHandlerTruncating(t *testing.T) {
 func TestFileHandlerOpen(t *testing.T) {
 	fh := &FileHandler{
 		&mockFile{},
-		&sync.Mutex{},
+		&sync.RWMutex{},
 		&mockOpener{},
 	}
 	defer func() {
@@ -94,7 +94,7 @@ func TestFileHandlerOpen(t *testing.T) {
 func TestFileHandlerReload(t *testing.T) {
 	fh := &FileHandler{
 		&mockFile{},
-		&sync.Mutex{},
+		&sync.RWMutex{},
 		&mockOpener{},
 	}
 	defer func() {

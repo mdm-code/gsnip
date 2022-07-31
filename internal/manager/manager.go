@@ -13,23 +13,31 @@ import (
 
 // Manager integrates operations on snippets stored in a file.
 type Manager struct {
-	fh *fs.FileHandler
-	c  snippets.Container
-	p  *parsing.Parser
+	fh      *fs.FileHandler
+	c       snippets.Container
+	p       *parsing.Parser
+	actions map[stream.Opcode]interface{}
 }
 
 // NewManager creates a pointer to a Manager instance for a given file handle.
 func NewManager(fh *fs.FileHandler) (*Manager, error) {
 	parser := parsing.NewParser()
 	snpts, err := parser.Parse(fh)
-	if err != nil && !errors.Is(err, parsing.ErrEmptyFile) {
-		return newManager(nil, nil, nil), err
+	actions := map[stream.Opcode]interface{}{
+		stream.Find:   (*Manager).find,
+		stream.Insert: (*Manager).insert,
+		stream.Delete: (*Manager).delete,
+		stream.Reload: (*Manager).reload,
+		stream.List:   (*Manager).list,
 	}
-	return newManager(fh, snpts, &parser), nil
+	if err != nil && !errors.Is(err, parsing.ErrEmptyFile) {
+		return newManager(nil, nil, nil, actions), err
+	}
+	return newManager(fh, snpts, &parser, actions), nil
 }
 
-func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser) *Manager {
-	return &Manager{fh, snpts, p}
+func newManager(fh *fs.FileHandler, snpts snippets.Container, p *parsing.Parser, actns map[stream.Opcode]interface{}) *Manager {
+	return &Manager{fh, snpts, p, actns}
 }
 
 // Execute runs a server command against the snippet container.
@@ -44,19 +52,21 @@ func (m *Manager) Execute(request stream.Request, reply *stream.Reply) error {
 	var body string
 	var err error
 
-	switch request.Operation {
-	case stream.List:
-		body, err = m.list()
-	case stream.Find:
-		body, err = m.find(string(request.Body))
-	case stream.Insert:
-		body, err = m.insert(string(request.Body))
-	case stream.Delete:
-		body, err = m.delete(string(request.Body))
-	case stream.Reload:
-		err = m.reload()
-	default:
-		err = fmt.Errorf("request %v is not supported", request.Operation)
+	op, ok := m.actions[request.Operation]
+
+	if !ok {
+		err = fmt.Errorf("request %v not supported", request.Operation)
+	}
+
+	if ok {
+		switch f := op.(type) {
+		case func(*Manager) (string, error):
+			body, err = f(m)
+		case func(*Manager) error:
+			err = f(m)
+		case func(*Manager, string) (string, error):
+			body, err = f(m, string(request.Body))
+		}
 	}
 
 	if err != nil {

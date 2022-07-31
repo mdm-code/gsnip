@@ -12,6 +12,7 @@ import (
 
 var c snippets.Container
 var p parsing.Parser
+var a map[stream.Opcode]interface{}
 
 func init() {
 	c, _ = snippets.NewSnippetsContainer("map")
@@ -26,6 +27,13 @@ func init() {
 		Body: "body",
 	})
 	p = parsing.NewParser()
+	a = map[stream.Opcode]interface{}{
+		stream.Find:   (*Manager).find,
+		stream.Insert: (*Manager).insert,
+		stream.Delete: (*Manager).delete,
+		stream.Reload: (*Manager).reload,
+		stream.List:   (*Manager).list,
+	}
 }
 
 func TestProgramAcceptsFindCmd(t *testing.T) {
@@ -35,7 +43,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 		Body: "body",
 	}
 	c.Insert(s)
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	rq := stream.Request{Operation: stream.Find, Body: []byte("func")}
 	var rp stream.Reply
 	err := m.Execute(rq, &rp)
@@ -46,7 +54,7 @@ func TestProgramAcceptsFindCmd(t *testing.T) {
 }
 
 func TestProgramAcceptsListCmd(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	rq := stream.Request{Operation: stream.List}
 	var rp stream.Reply
 	err := m.Execute(rq, &rp)
@@ -67,7 +75,7 @@ func TestProgramAcceptsListCmd(t *testing.T) {
 }
 
 func TestUnrecognizedInputFails(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	rq := stream.Request{Operation: stream.Undefined}
 	var rp stream.Reply
 	err := m.Execute(rq, &rp)
@@ -77,7 +85,7 @@ func TestUnrecognizedInputFails(t *testing.T) {
 }
 
 func TestExecuteList(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	result, err := m.list()
 	if err != nil {
 		t.Errorf("got %v", result)
@@ -85,7 +93,7 @@ func TestExecuteList(t *testing.T) {
 }
 
 func TestExecuteFind(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	result, err := m.find("func")
 	if err != nil {
 		t.Errorf("got: %v", result)
@@ -93,7 +101,7 @@ func TestExecuteFind(t *testing.T) {
 }
 
 func TestExecuteFindFails(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 	result, err := m.find("non-existent")
 	if err == nil {
 		t.Errorf("got: %v", result)
@@ -101,7 +109,7 @@ func TestExecuteFindFails(t *testing.T) {
 }
 
 func TestExecuteInsert(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 
 	// NOTE: Recover from nil pointer FileHandler.file.Write panic
 	defer func() {
@@ -124,7 +132,7 @@ func TestExecuteInsert(t *testing.T) {
 }
 
 func TestExecuteDelete(t *testing.T) {
-	m := newManager(&fs.FileHandler{}, c, &p)
+	m := newManager(&fs.FileHandler{}, c, &p, a)
 
 	// NOTE: Recover from nil pointer FileHandler.file.Write panic
 	defer func() {

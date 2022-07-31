@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/rpc/jsonrpc"
 	"os"
+	"strings"
 
 	"github.com/mdm-code/gsnip/internal/stream"
 )
@@ -21,6 +22,17 @@ type cmd struct {
 	fn      func([]string) error
 	desc    string
 	aliases []string
+}
+
+func (c cmd) String() string {
+	result := fmt.Sprintf(
+		"%-10s %-10s %-10s %-10s",
+		"gsnip",
+		c.name,
+		"["+strings.Join(c.aliases, "|")+"]",
+		c.desc,
+	)
+	return result
 }
 
 func addCmd(c cmd) {
@@ -53,7 +65,7 @@ func parseArgs() ([]string, error) {
 		fs.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nCommands:\n")
 		for _, c := range cmdList {
-			fmt.Fprintf(os.Stderr, c.desc+"\n")
+			fmt.Fprintf(os.Stderr, "%s\n", c)
 		}
 	}
 

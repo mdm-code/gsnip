@@ -15,8 +15,8 @@ func init() {
 		cmd{
 			name:    "insert",
 			fn:      cmdInsert,
-			desc:    "gsnip\tinsert\tinsert new snippet",
-			aliases: []string{"ins"},
+			desc:    "insert a new snippet",
+			aliases: []string{"i", "in", "ins"},
 		},
 	)
 }
